@@ -1,0 +1,32 @@
+# Project — Claude Instructions
+
+## Generated Documents
+
+When producing any structured output — audits, reviews, implementation
+plans, phase summaries, spec analyses, or similar — write it as an HTML
+file to `.claude/` and display only a brief summary in chat.
+
+**Workflow:**
+1. Write the document to `.claude/<name>-<date>.html`
+2. Update the `Alt+D` keybinding in the IDE's user keybindings file
+   to point at the new file's URL on the local doc server
+3. Ensure the doc server is running on port 7432
+   (`python3 .claude/server.py`)
+4. Post a one-paragraph summary in chat with a link to the file
+5. Tell the user to press **Alt+D** to open it in the Simple Browser
+
+Do not paste the full document content into the chat window.
+
+## Project Context
+
+- **Doc server:** `http://localhost:7432/` served from `.claude/`
+- **Keybinding:** `Alt+D` opens latest doc in the IDE's Simple Browser
+- **Spec docs:** All-caps `.md` files are the user's own design/arch/spec
+  documents. Assist with formatting, presentation, and semantic
+  completeness only — do not alter decisions.
+- **Status updates:** Provide 1–12 word updates every 15–30 seconds
+  during long-running tasks.
+- **Chat formatting:** Write for a narrow panel — short paragraphs,
+  no wall-to-wall prose.
+
+## Add project-specific context below this line

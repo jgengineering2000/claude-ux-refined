@@ -1,0 +1,308 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- Copyright (c) 2026 Jonathan George -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review — {{PROJECT}} — {{DATE}}</title>
+<style>
+  :root {
+    --bg:        #1e1e2e;
+    --surface:   #27273a;
+    --border:    #3a3a55;
+    --text:      #cdd6f4;
+    --muted:     #7f849c;
+    --accent:    #89b4fa;
+    --green:     #a6e3a1;
+    --amber:     #f9e2af;
+    --red:       #f38ba8;
+    --purple:    #cba6f7;
+    --code-bg:   #181825;
+    --fixed:     #26263a;
+    --design:    #313244;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    background: var(--bg);
+    color: var(--text);
+    padding: 40px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* Sticky open-in-IDE bar */
+  .vscode-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--code-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex; align-items: center; gap: 12px;
+    margin: -40px -40px 32px;
+    font-size: 12px; color: var(--muted);
+  }
+  .vscode-bar code {
+    font-family: "SF Mono","Fira Code",Consolas,monospace;
+    font-size: 11px; color: var(--accent);
+    background: var(--surface);
+    padding: 2px 7px; border-radius: 4px;
+    border: 1px solid var(--border); user-select: all;
+  }
+  .copy-btn {
+    cursor: pointer; background: var(--surface);
+    border: 1px solid var(--border); color: var(--text);
+    font-size: 11px; padding: 3px 10px; border-radius: 4px;
+    font-family: inherit;
+  }
+  .copy-btn:hover { background: var(--design); }
+  .copy-btn.ok { color: var(--green); border-color: var(--green); }
+
+  /* Header */
+  .doc-header {
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 20px; margin-bottom: 36px;
+  }
+  .doc-header h1 { font-size: 22px; font-weight: 600; color: var(--accent); margin-bottom: 8px; }
+  .doc-meta { display: flex; gap: 24px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+
+  /* Summary bar */
+  .summary-bar {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px 20px; margin-bottom: 32px;
+  }
+  .stat { text-align: center; }
+  .stat .val { font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat .lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .stat.green .val { color: var(--green); }
+  .stat.amber .val { color: var(--amber); }
+  .stat.muted .val { color: var(--muted); }
+  .sep { width: 1px; background: var(--border); margin: 4px 0; }
+
+  /* Section headings */
+  h2 {
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin: 40px 0 16px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  h3 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+
+  /* Finding cards */
+  .finding {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 4px solid var(--border);
+    border-radius: 6px; padding: 16px 18px; margin-bottom: 14px;
+  }
+  .finding.fixed  { border-left-color: var(--green); }
+  .finding.open   { border-left-color: var(--amber); }
+  .finding.info   { border-left-color: var(--accent); }
+  .finding.dead   { border-left-color: var(--muted); }
+
+  .finding-header {
+    display: flex; align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px; gap: 12px; flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .badge.fixed { background: rgba(166,227,161,0.15); color: var(--green); }
+  .badge.open  { background: rgba(249,226,175,0.15); color: var(--amber); }
+  .badge.info  { background: rgba(137,180,250,0.12); color: var(--accent); }
+  .badge.dead  { background: rgba(127,132,156,0.15); color: var(--muted); }
+
+  .file-ref {
+    font-size: 12px; color: var(--accent);
+    font-family: "SF Mono","Fira Code",Consolas,monospace;
+    margin-bottom: 8px; display: block; text-decoration: none;
+  }
+  .file-ref:hover { text-decoration: underline; }
+
+  .finding p { color: var(--text); margin-bottom: 8px; font-size: 13px; }
+  .finding p:last-child { margin-bottom: 0; }
+  .finding ul { padding-left: 18px; margin-bottom: 8px; }
+  .finding ul li { font-size: 13px; margin-bottom: 3px; }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 4px; padding: 12px 14px;
+    overflow-x: auto; margin: 8px 0;
+    font-family: "SF Mono","Fira Code",Consolas,monospace;
+    font-size: 12px; line-height: 1.5;
+  }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th {
+    background: var(--design); color: var(--muted);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    text-align: left; padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+  td code {
+    font-family: "SF Mono","Fira Code",Consolas,monospace;
+    font-size: 11px; background: var(--code-bg);
+    padding: 1px 5px; border-radius: 3px;
+  }
+  td a { color: var(--accent); text-decoration: none; font-size: 12px; }
+  td a:hover { text-decoration: underline; }
+
+  /* Annotations */
+  .annotate-btn {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); font-size: 11px;
+    padding: 2px 8px; border-radius: 4px;
+    cursor: pointer; font-family: inherit;
+    float: right; margin-left: 8px;
+  }
+  .annotate-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .annotate-btn.has-note { border-color: var(--purple); color: var(--purple); }
+  .annotation-area { display: none; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+  .annotation-area.open { display: block; }
+  .annotation-area textarea {
+    width: 100%; min-height: 64px;
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 4px; color: var(--text);
+    font-family: inherit; font-size: 12px;
+    padding: 8px; resize: vertical; outline: none; box-sizing: border-box;
+  }
+  .annotation-area textarea:focus { border-color: var(--accent); }
+  .annotation-status { font-size: 10px; color: var(--muted); margin-top: 4px; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="vscode-bar">
+  <span>Open in Simple Browser:</span>
+  <code id="sburl">http://localhost:7432/review-template.html</code>
+  <button class="copy-btn" onclick="
+    navigator.clipboard.writeText(document.getElementById('sburl').textContent).then(()=>{
+      this.textContent='✔ Copied'; this.classList.add('ok');
+      setTimeout(()=>{ this.textContent='Copy URL'; this.classList.remove('ok'); },2000);
+    });">Copy URL</button>
+  <span style="margin-left:auto;opacity:0.5">or press <code>Alt+D</code></span>
+</div>
+
+<div class="doc-header">
+  <h1>{{TITLE}}</h1>
+  <div class="doc-meta">
+    <span>📅 {{DATE}}</span>
+    <span>🔍 {{SCOPE}}</span>
+  </div>
+</div>
+
+<div class="summary-bar">
+  <div class="stat green"><div class="val">0</div><div class="lbl">Fixed</div></div>
+  <div class="sep"></div>
+  <div class="stat amber"><div class="val">0</div><div class="lbl">Open</div></div>
+  <div class="sep"></div>
+  <div class="stat muted"><div class="val">0</div><div class="lbl">Info</div></div>
+</div>
+
+
+<h2>Section Heading</h2>
+
+<div class="finding fixed">
+  <div class="finding-header" style="flex-wrap:wrap">
+    <h3>1. Example fixed finding</h3>
+    <span class="badge fixed">✔ Fixed</span>
+  </div>
+  <a class="file-ref" href="#">src/example.rs:42</a>
+  <p>Description of the finding and what was done to fix it.</p>
+  <pre>// Before
+old_code();
+// After
+new_code();</pre>
+</div>
+
+<div class="finding open">
+  <div class="finding-header" style="flex-wrap:wrap">
+    <h3>2. Example open item</h3>
+    <span class="badge open">⚑ Needs Input</span>
+  </div>
+  <p>Description of something that needs a design decision.</p>
+</div>
+
+<div class="finding info">
+  <div class="finding-header" style="flex-wrap:wrap">
+    <h3>3. Example informational item</h3>
+    <span class="badge info">Minor</span>
+  </div>
+  <p>Low-priority observation.</p>
+</div>
+
+<div class="finding dead">
+  <div class="finding-header" style="flex-wrap:wrap">
+    <h3>4. Example dead code</h3>
+    <span class="badge dead">Reported</span>
+  </div>
+  <p>Unused code that should be cleaned up eventually.</p>
+</div>
+
+
+<h2>Summary Table</h2>
+
+<table>
+  <tr><th>File</th><th>Change</th></tr>
+  <tr><td><a href="#">src/example.rs</a></td><td>Description of change</td></tr>
+</table>
+
+<script>
+const DOC = location.pathname.split('/').pop().replace(/\.[^.]+$/,'');
+const API = `http://localhost:7432/annotations/${DOC}`;
+let notes = {}, saveTimer = null;
+
+async function loadNotes() {
+  try {
+    notes = await (await fetch(API)).json();
+    document.querySelectorAll('.finding').forEach(card => {
+      const id = card.dataset.id;
+      if (notes[id]) {
+        card.querySelector('textarea').value = notes[id];
+        const btn = card.querySelector('.annotate-btn');
+        btn.classList.add('has-note'); btn.textContent = '✎ Note';
+      }
+    });
+  } catch(e) {}
+}
+
+async function saveNotes() {
+  try { await fetch(API, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(notes)}); }
+  catch(e) {}
+}
+
+document.querySelectorAll('.finding').forEach((card, i) => {
+  const id = `finding-${i+1}`;
+  card.dataset.id = id;
+  const header = card.querySelector('.finding-header');
+  const btn = document.createElement('button');
+  btn.className = 'annotate-btn'; btn.textContent = '✎ Annotate';
+  header.appendChild(btn);
+  const area = document.createElement('div');
+  area.className = 'annotation-area';
+  area.innerHTML = '<textarea placeholder="Add a note…"></textarea><div class="annotation-status"></div>';
+  card.appendChild(area);
+  const ta = area.querySelector('textarea');
+  btn.addEventListener('click', () => { area.classList.toggle('open'); if (area.classList.contains('open')) ta.focus(); });
+  ta.addEventListener('input', () => {
+    notes[id] = ta.value;
+    btn.classList.toggle('has-note', ta.value.length > 0);
+    btn.textContent = ta.value.length > 0 ? '✎ Note' : '✎ Annotate';
+    clearTimeout(saveTimer); saveTimer = setTimeout(saveNotes, 800);
+  });
+});
+
+loadNotes();
+</script>
+</body>
+</html>
