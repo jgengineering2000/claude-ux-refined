@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Claude doc server",
+      "type": "shell",
+      "command": "python3 '${workspaceFolder}/.claude/server.py'",
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "close": true
+      },
+      "problemMatcher": {
+        "pattern": { "regexp": "^NEVER_MATCHES$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Claude doc server",
+          "endsPattern":   "^Claude doc server"
+        }
+      }
+    }
+  ]
+}

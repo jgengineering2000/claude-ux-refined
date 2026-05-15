@@ -157,34 +157,35 @@
   td a { color: var(--accent); text-decoration: none; font-size: 12px; }
   td a:hover { text-decoration: underline; }
 
-  /* Annotations */
-  .annotate-btn {
+  /* Annotations — injected by JS onto .finding cards, h2/h3, and table
+     section header rows (single <td> with colspan > 1) */
+  .ann-btn {
     background: none; border: 1px solid var(--border);
     color: var(--muted); font-size: 11px;
     padding: 2px 8px; border-radius: 4px;
     cursor: pointer; font-family: inherit;
     float: right; margin-left: 8px;
   }
-  .annotate-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .annotate-btn.has-note { border-color: var(--purple); color: var(--purple); }
-  .annotation-area { display: none; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
-  .annotation-area.open { display: block; }
-  .annotation-area textarea {
-    width: 100%; min-height: 64px;
+  .ann-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ann-btn.has-note { border-color: var(--purple); color: var(--purple); }
+  .ann-wrap { display: none; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+  .ann-wrap.show { display: block; }
+  .ann-wrap textarea {
+    width: 100%; min-height: 56px;
     background: var(--code-bg); border: 1px solid var(--border);
     border-radius: 4px; color: var(--text);
     font-family: inherit; font-size: 12px;
     padding: 8px; resize: vertical; outline: none; box-sizing: border-box;
   }
-  .annotation-area textarea:focus { border-color: var(--accent); }
-  .annotation-status { font-size: 10px; color: var(--muted); margin-top: 4px; text-align: right; }
+  .ann-wrap textarea:focus { border-color: var(--accent); }
+  .ann-status { font-size: 10px; color: var(--muted); margin-top: 4px; text-align: right; }
 </style>
 </head>
 <body>
 
 <div class="vscode-bar">
   <span>Open in Simple Browser:</span>
-  <code id="sburl">http://localhost:7432/review-template.html</code>
+  <code id="sburl"></code>
   <button class="copy-btn" onclick="
     navigator.clipboard.writeText(document.getElementById('sburl').textContent).then(()=>{
       this.textContent='✔ Copied'; this.classList.add('ok');
@@ -258,51 +259,90 @@ new_code();</pre>
 </table>
 
 <script>
-const DOC = location.pathname.split('/').pop().replace(/\.[^.]+$/,'');
-const API = `http://localhost:7432/annotations/${DOC}`;
-let notes = {}, saveTimer = null;
+// URL bar: derive from actual page location so any port works
+document.getElementById('sburl').textContent = window.location.href;
 
-async function loadNotes() {
+// Annotation system — relative API path so port never needs hardcoding
+const DOC = location.pathname.split('/').pop().replace(/\.[^.]+$/, '');
+const API = `/annotations/${DOC}`;
+let notes = {}, tmr = null, annMap = new Map();
+
+function mkWrap(ph) {
+  const w = document.createElement('div'); w.className = 'ann-wrap';
+  w.innerHTML = `<textarea placeholder="${ph}"></textarea><div class="ann-status"></div>`;
+  return w;
+}
+
+function wireInput(id, btn, ta, st) {
+  ta.oninput = () => {
+    notes[id] = ta.value;
+    btn.classList.toggle('has-note', ta.value.length > 0);
+    btn.textContent = ta.value ? '✎ Note' : '✎ Annotate';
+    st.textContent = 'Saving…';
+    clearTimeout(tmr); tmr = setTimeout(save, 800);
+  };
+  annMap.set(id, {btn, ta});
+}
+
+// Finding cards
+document.querySelectorAll('.finding').forEach((c, i) => {
+  const id = `finding-${i+1}`;
+  const btn = document.createElement('button');
+  btn.className = 'ann-btn'; btn.textContent = '✎ Annotate';
+  (c.querySelector('.finding-header') || c.firstElementChild || c).appendChild(btn);
+  const wrap = mkWrap('Add a note…'); c.appendChild(wrap);
+  c.dataset.annId = id;
+  const ta = wrap.querySelector('textarea'), st = wrap.querySelector('.ann-status');
+  btn.onclick = (e) => { e.stopPropagation(); wrap.classList.toggle('show'); if (wrap.classList.contains('show')) ta.focus(); };
+  wireInput(id, btn, ta, st);
+});
+
+// Section headings
+document.querySelectorAll('h2, h3').forEach((h, i) => {
+  const id = `head-${i}`;
+  const btn = document.createElement('button');
+  btn.className = 'ann-btn'; btn.textContent = '✎ Annotate'; h.appendChild(btn);
+  const wrap = mkWrap('Section note…'); h.insertAdjacentElement('afterend', wrap);
+  h.dataset.annId = id;
+  const ta = wrap.querySelector('textarea'), st = wrap.querySelector('.ann-status');
+  btn.onclick = (e) => { e.stopPropagation(); wrap.classList.toggle('show'); if (wrap.classList.contains('show')) ta.focus(); };
+  wireInput(id, btn, ta, st);
+});
+
+// Table section header rows — single <td> with colspan > 1
+document.querySelectorAll('tr').forEach((row, i) => {
+  if (row.cells.length !== 1 || row.cells[0].tagName !== 'TD' || row.cells[0].colSpan < 2) return;
+  const id = `trsec-${i}`;
+  const btn = document.createElement('button'); btn.className = 'ann-btn'; btn.textContent = '✎ Annotate';
+  row.cells[0].appendChild(btn);
+  const annRow = document.createElement('tr'); annRow.style.display = 'none';
+  const annTd = document.createElement('td'); annTd.colSpan = 99; annTd.style.padding = '0';
+  const wrap = mkWrap('Table section note…');
+  Object.assign(wrap.style, {margin: '0', padding: '6px 10px 8px', borderTop: 'none'});
+  annTd.appendChild(wrap); annRow.appendChild(annTd); row.insertAdjacentElement('afterend', annRow);
+  row.dataset.annId = id;
+  const ta = wrap.querySelector('textarea'), st = wrap.querySelector('.ann-status');
+  btn.onclick = (e) => { e.stopPropagation(); const open = annRow.style.display !== 'none'; annRow.style.display = open ? 'none' : ''; if (!open) ta.focus(); };
+  wireInput(id, btn, ta, st);
+});
+
+async function save() {
+  try {
+    await fetch(API, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(notes)});
+    document.querySelectorAll('.ann-status').forEach(s => s.textContent = 'Saved ' + new Date().toLocaleTimeString());
+  } catch(e) {}
+}
+
+async function load() {
   try {
     notes = await (await fetch(API)).json();
-    document.querySelectorAll('.finding').forEach(card => {
-      const id = card.dataset.id;
-      if (notes[id]) {
-        card.querySelector('textarea').value = notes[id];
-        const btn = card.querySelector('.annotate-btn');
-        btn.classList.add('has-note'); btn.textContent = '✎ Note';
-      }
+    annMap.forEach(({btn, ta}, id) => {
+      if (notes[id]) { ta.value = notes[id]; btn.textContent = '✎ Note'; btn.classList.add('has-note'); }
     });
   } catch(e) {}
 }
 
-async function saveNotes() {
-  try { await fetch(API, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(notes)}); }
-  catch(e) {}
-}
-
-document.querySelectorAll('.finding').forEach((card, i) => {
-  const id = `finding-${i+1}`;
-  card.dataset.id = id;
-  const header = card.querySelector('.finding-header');
-  const btn = document.createElement('button');
-  btn.className = 'annotate-btn'; btn.textContent = '✎ Annotate';
-  header.appendChild(btn);
-  const area = document.createElement('div');
-  area.className = 'annotation-area';
-  area.innerHTML = '<textarea placeholder="Add a note…"></textarea><div class="annotation-status"></div>';
-  card.appendChild(area);
-  const ta = area.querySelector('textarea');
-  btn.addEventListener('click', () => { area.classList.toggle('open'); if (area.classList.contains('open')) ta.focus(); });
-  ta.addEventListener('input', () => {
-    notes[id] = ta.value;
-    btn.classList.toggle('has-note', ta.value.length > 0);
-    btn.textContent = ta.value.length > 0 ? '✎ Note' : '✎ Annotate';
-    clearTimeout(saveTimer); saveTimer = setTimeout(saveNotes, 800);
-  });
-});
-
-loadNotes();
+load();
 </script>
 </body>
 </html>

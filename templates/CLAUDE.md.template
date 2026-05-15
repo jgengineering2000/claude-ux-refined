@@ -8,18 +8,29 @@ file to `.claude/` and display only a brief summary in chat.
 
 **Workflow:**
 1. Write the document to `.claude/<name>-<date>.html`
-2. Update the `Alt+D` keybinding in the IDE's user keybindings file
-   to point at the new file's URL on the local doc server
-3. Ensure the doc server is running on port 7432
-   (`python3 .claude/server.py`)
-4. Post a one-paragraph summary in chat with a link to the file
+2. Read the live port: `PORT=$(cat .claude/server.port 2>/dev/null || echo 7432)`
+   Update the `Alt+D` keybinding in the IDE's user keybindings file to
+   `http://localhost:${PORT}/<name>-<date>.html`
+3. The doc server auto-starts when the project folder opens (via the
+   `Start Claude doc server` task in `.vscode/tasks.json`). If not
+   running, start manually: `python3 .claude/server.py &`
+   It writes its bound port to `.claude/server.port` and auto-selects
+   the next free port if the default (7432) is taken by another project.
+4. Post a one-paragraph summary with a link to the file
 5. Tell the user to press **Alt+D** to open it in the Simple Browser
 
 Do not paste the full document content into the chat window.
 
+**Every generated HTML document must include the annotation system** — JS-driven
+`✎ Annotate` buttons on every `.finding`/`.card` div, every `h2`/`h3` heading,
+and every table section header row (single `<td>` with `colspan > 1`). Notes
+persist via a relative `/annotations/${DOC}` API call — the port never needs
+to be hardcoded inside the document. See `templates/review-template.html` for
+the full CSS + JS block to copy into every document.
+
 ## Project Context
 
-- **Doc server:** `http://localhost:7432/` served from `.claude/`
+- **Doc server:** served from `.claude/` on the port in `.claude/server.port`
 - **Keybinding:** `Alt+D` opens latest doc in the IDE's Simple Browser
 - **Spec docs:** All-caps `.md` files are the user's own design/arch/spec
   documents. Assist with formatting, presentation, and semantic
