@@ -368,7 +368,7 @@ allItems.forEach(el => {
 
   const hi = parseInt(nearestH.dataset.annHi);
   const n = (hCounts.get(hi) || 0) + 1; hCounts.set(hi, n);
-  const displayId = `${nearestH.dataset.annPrefix}-${n}`;
+  const displayId = `${nearestH.dataset.annPrefix}${n}`;
   const storeId   = `item-${hi}-${n}`;
 
   const idSpan = document.createElement('span');

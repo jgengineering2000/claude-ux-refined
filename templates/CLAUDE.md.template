@@ -2,49 +2,23 @@
 
 ## Generated Documents
 
-When producing any structured output — audits, reviews, implementation
-plans, phase summaries, spec analyses, or similar — write it as an HTML
-file to `.claude/` and display only a brief summary in chat.
+Write structured output (audits, plans, reviews) as HTML to `.claude/`, post a one-paragraph summary + link in chat, tell the user **Alt+D**. Never paste document content into chat.
 
-**Workflow:**
-1. Write the document to `.claude/<name>-<date>.html`
-2. Read the live port: `PORT=$(cat .claude/server.port 2>/dev/null || echo 7432)`
-   Update the `Alt+D` keybinding in the IDE's user keybindings file to
-   `http://localhost:${PORT}/<name>-<date>.html`
-3. The doc server auto-starts when the project folder opens (via the
-   `Start Claude doc server` task in `.vscode/tasks.json`). If not
-   running, start manually: `python3 .claude/server.py &`
-   It writes its bound port to `.claude/server.port` and auto-selects
-   the next free port if the default (7432) is taken by another project.
-4. Post a one-paragraph summary with a link to the file
-5. Tell the user to press **Alt+D** to open it in the Simple Browser
+1. Write `.claude/<name>-<date>.html`
+2. `PORT=$(cat .claude/server.port 2>/dev/null || echo 7432)` — set `Alt+D` keybinding to `http://localhost:${PORT}/<name>-<date>.html`
+3. Server auto-starts via `Start Claude doc server` VSCode task; manual fallback: `python3 .claude/server.py &`
 
-Do not paste the full document content into the chat window.
-
-**Every generated HTML document must include the annotation system.** Four targets
-receive annotation UI, all persisted via a relative `/annotations/${DOC}` API
-call (port never hardcoded in the document):
-
-1. **`.finding` / `.card` divs** — `✎ Annotate` text button
-2. **`h2` / `h3` headings** — `✎ Annotate` text button
-3. **Table section header rows** — single `<td colspan>` rows get `✎ Annotate`
-4. **`<li>` bullets and data `<tr>` rows** — each gets a short ID badge (e.g.
-   `DG-1`) derived from the nearest heading prefix, plus a small `✎` icon.
-   IDs let users reference specific items by label without typing full text.
-   Storage key is `item-{headingIndex}-{n}` (unique even when prefixes collide).
-
-See `templates/review-template.html` for the complete CSS + JS to copy verbatim.
+Every HTML doc must include the annotation system from `templates/review-template.html` (CSS + JS verbatim). Four targets, all via relative `/annotations/${DOC}`:
+- `.finding`/`.card` divs and `h2`/`h3` headings → `✎ Annotate` button
+- Table section rows (single `<td colspan>`) → `✎ Annotate` button
+- `<li>` and data `<tr>` items → visible ID badge (e.g. `DG1`) + `✎` icon; stored as `item-{hi}-{n}`
 
 ## Project Context
 
-- **Doc server:** served from `.claude/` on the port in `.claude/server.port`
-- **Keybinding:** `Alt+D` opens latest doc in the IDE's Simple Browser
-- **Spec docs:** All-caps `.md` files are the user's own design/arch/spec
-  documents. Assist with formatting, presentation, and semantic
-  completeness only — do not alter decisions.
-- **Status updates:** Provide 1–12 word updates every 15–30 seconds
-  during long-running tasks.
-- **Chat formatting:** Write for a narrow panel — short paragraphs,
-  no wall-to-wall prose.
+- **Doc server:** port in `.claude/server.port` (default 7432)
+- **Keybinding:** `Alt+D` → Simple Browser
+- **Spec docs:** All-caps `.md` files are owner's specs — formatting/completeness only, no decisions
+- **Updates:** 1–12 words every 15–30 s during long tasks
+- **Format:** Short paragraphs, no wall-to-wall prose
 
 ## Add project-specific context below this line
