@@ -21,12 +21,19 @@ file to `.claude/` and display only a brief summary in chat.
 
 Do not paste the full document content into the chat window.
 
-**Every generated HTML document must include the annotation system** — JS-driven
-`✎ Annotate` buttons on every `.finding`/`.card` div, every `h2`/`h3` heading,
-and every table section header row (single `<td>` with `colspan > 1`). Notes
-persist via a relative `/annotations/${DOC}` API call — the port never needs
-to be hardcoded inside the document. See `templates/review-template.html` for
-the full CSS + JS block to copy into every document.
+**Every generated HTML document must include the annotation system.** Four targets
+receive annotation UI, all persisted via a relative `/annotations/${DOC}` API
+call (port never hardcoded in the document):
+
+1. **`.finding` / `.card` divs** — `✎ Annotate` text button
+2. **`h2` / `h3` headings** — `✎ Annotate` text button
+3. **Table section header rows** — single `<td colspan>` rows get `✎ Annotate`
+4. **`<li>` bullets and data `<tr>` rows** — each gets a short ID badge (e.g.
+   `DG-1`) derived from the nearest heading prefix, plus a small `✎` icon.
+   IDs let users reference specific items by label without typing full text.
+   Storage key is `item-{headingIndex}-{n}` (unique even when prefixes collide).
+
+See `templates/review-template.html` for the complete CSS + JS to copy verbatim.
 
 ## Project Context
 
