@@ -1,5 +1,5 @@
 // Injects into the .bar of every Claude doc page:
-//   LEFT  — "← Manifest" plain link (skipped if page already has one)
+//   LEFT  — "← Manifest" plain link + muted "Alt+D" label
 //   RIGHT — document generation timestamp (from filename) + ↻ Refresh button
 // Skips entirely on manifest.html itself.
 (function () {
@@ -35,18 +35,34 @@
     };
   }
 
+  function makeAltD() {
+    var s = document.createElement('span');
+    s.style.cssText = 'font-size:11px;color:var(--mu,#7f849c);opacity:.5;flex-shrink:0';
+    s.textContent = 'Alt+D';
+    return s;
+  }
+
   function inject() {
     var bar = document.querySelector('.bar');
     if (!bar) return;
 
-    // ── Left: ← Manifest link — skip if bar already has one ─────────────
-    if (!bar.querySelector('a[href="/manifest.html"]')) {
+    // ── Left: ← Manifest + Alt+D ─────────────────────────────────────────
+    var existingLink = bar.querySelector('a[href="/manifest.html"]');
+    if (!existingLink) {
+      // Inject new link as first child
       var a = document.createElement('a');
       a.className = 'manifest-link';
       a.href = '/manifest.html';
       a.textContent = '← Manifest';
       linkStyle(a);
       bar.insertBefore(a, bar.firstChild);
+      existingLink = a;
+    }
+    // Insert Alt+D immediately after the manifest link if not already there
+    if (!bar.querySelector('.altd-label')) {
+      var altd = makeAltD();
+      altd.className = 'altd-label';
+      existingLink.insertAdjacentElement('afterend', altd);
     }
 
     // ── Right: timestamp + ↻ Refresh — skip if already injected ──────────
@@ -71,7 +87,6 @@
     btn.onclick = function () { window.location.reload(); };
     right.appendChild(btn);
 
-    // Replace the existing margin-left:auto spacer (Alt+D label) if present
     var spacer = bar.querySelector('[style*="margin-left:auto"]');
     if (spacer) {
       bar.replaceChild(right, spacer);

@@ -67,6 +67,7 @@ td.spec-name a:hover{color:var(--ac);text-decoration:underline}
 
 <div class="bar">
   <strong>Manifest</strong>
+  <span style="font-size:11px;color:var(--mu);opacity:.5">Alt+D</span>
   <span id="bar-subtitle" style="color:var(--mu);font-size:11px"></span>
   <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
     <span id="status" style="font-size:11px;color:var(--mu);opacity:.75"></span>
@@ -93,7 +94,7 @@ td.spec-name a:hover{color:var(--ac);text-decoration:underline}
 </table>
 
 <h2>Project Specifications</h2>
-<div class="meta" id="spec-summary"></div>
+<div id="spec-summary"></div>
 <table>
   <thead>
     <tr>
@@ -290,8 +291,7 @@ async function load() {
   specsRes.forEach(s => stbody.appendChild(renderSpecRow(s)));
   specSortCol = 'filename'; specSortDir = 1;
   sortSpecTable();
-  document.getElementById('spec-summary').textContent =
-    `${specsRes.length} specification file${specsRes.length !== 1 ? 's' : ''}`;
+  // spec-summary intentionally left blank
 
   const now = new Date();
   const h = now.getHours(), m = String(now.getMinutes()).padStart(2,'0');

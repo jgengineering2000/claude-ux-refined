@@ -279,6 +279,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 <body>
 <div class="bar">
   <a href="/manifest.html">← Manifest</a>
+  <span class="altd-label" style="font-size:11px;color:var(--mu);opacity:.5">Alt+D</span>
   <strong>{title}</strong>
   <span class="doc-right" style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0">
     <span style="font-size:11px;color:var(--mu);opacity:.75">{ts_str}</span>

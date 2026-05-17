@@ -46,7 +46,7 @@ python3 patches/claude-ui-vocabulary.py "..."      # ellipsis
 python3 patches/claude-ui-vocabulary.py ""         # hide it
 ```
 
-### A3. Simple Browser Tab Title *(requires sudo)*
+### A3. Simple Browser Tab Title
 
 VS Code's Simple Browser and Antigravity's "Jetski" both display a
 static label ("Simple Browser" / "Jetski Preview") in the tab,
@@ -56,7 +56,7 @@ tabs are indistinguishable.
 This patch makes the tab title reflect the filename of the page.
 
 ```bash
-sudo python3 patches/simplebrowser-title.py
+python3 patches/simplebrowser-title.py
 ```
 
 Targets auto-detected from:
@@ -64,14 +64,34 @@ Targets auto-detected from:
 - VS Code (snap): `/snap/code/…`
 - Antigravity: `/usr/share/antigravity/…`
 
+The script checks whether the target file is writable before proceeding.
+**System-installed** VS Code / Antigravity (apt/dpkg) store the extension
+under `/usr/share/` (root-owned), so `sudo` is required.
+**User-local installs** (AppImage, `~/.local/`) are writable without
+elevation — run without `sudo`.
+
+```bash
+# system install (apt/dpkg) — target is root-owned
+sudo python3 patches/simplebrowser-title.py
+
+# user-local install (AppImage, ~/.local/) — no sudo needed
+python3 patches/simplebrowser-title.py
+```
+
+If elevation is needed and not provided, the script exits with a clear
+message rather than failing silently.
+
 ### Apply All
 
 ```bash
-# No sudo — layout and vocabulary only
+# Layout + vocabulary only (never needs sudo)
 python3 patches/apply-all.py
 
-# With sudo — includes Simple Browser title fix
+# Include Simple Browser title fix:
+#   system install (apt/dpkg)
 sudo python3 patches/apply-all.py --browser
+#   user-local install
+python3 patches/apply-all.py --browser
 ```
 
 After any patch: `Ctrl+Shift+P` → **Developer: Restart Extension Host**
@@ -164,7 +184,7 @@ and can be committed to git or read by Claude directly.
 |---|---|---|---|
 | Layout patch (A1) | ✔ | ✔ | — |
 | Vocabulary patch (A2) | ✔ | ✔ | — |
-| Simple Browser title (A3) | ✔ (sudo) | ✔ (sudo) | — |
+| Simple Browser title (A3) | ✔ (sudo if system-installed) | ✔ (sudo if system-installed) | — |
 | Doc server (B) | ✔ | ✔ | ✔ |
 | CLAUDE.md workflow (B) | ✔ | ✔ | ✔ |
 | Alt+D keybinding (B) | ✔ | ✔ | — |
