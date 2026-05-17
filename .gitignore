@@ -5,3 +5,6 @@ claude-docs/marked.min.js
 __pycache__/
 *.pyc
 *.bak
+dist/
+build/
+*.spec
