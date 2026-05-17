@@ -1,4 +1,4 @@
-# Claude Code UX Improvements
+# AUR — AI UX Refinements
 
 Quality-of-life patches and workflow tooling for
 [Claude Code](https://claude.ai/code), Anthropic's AI coding assistant.
@@ -10,6 +10,44 @@ Two independent layers — use either or both:
 - **B. Review Document Infrastructure** — generate, view, and
   annotate structured HTML documents from within the IDE
   (works with any Claude Code environment)
+
+---
+
+## Installation
+
+### Linux — clickable installer
+
+1. Download `claude-ux-installer` from the
+   [latest release](https://github.com/jgengineering2000/claude-ux-refined/releases/latest)
+2. Mark it executable:
+   ```bash
+   chmod +x claude-ux-installer
+   ```
+3. Double-click it in your file manager, or run `./claude-ux-installer`
+
+A GUI window opens with checkboxes for each feature. No Python installation required.
+
+### Windows / macOS — source install
+
+1. Download `claude-ux-refined-vX.Y.Z-source.zip` from the
+   [latest release](https://github.com/jgengineering2000/claude-ux-refined/releases/latest)
+2. Extract the zip and open a terminal in the folder
+3. Run the CLI installer:
+   ```
+   python3 install.py
+   ```
+   or the GUI installer (requires Python with tkinter):
+   ```
+   python3 install-gui.py
+   ```
+
+### From source (any platform)
+
+```bash
+git clone https://github.com/jgengineering2000/claude-ux-refined.git
+cd claude-ux-refined
+python3 install.py
+```
 
 ---
 
@@ -116,12 +154,14 @@ or the CLI with any browser.
 
 - Dark-themed HTML documents with colour-coded finding cards
 - Per-finding annotation system, auto-saved to local JSON
-- Sticky URL bar for opening documents in the IDE's Simple Browser
-- Single-keypress document access (`Alt+D`)
+- Document manifest hub with quick-prompt bar (Alt+D)
+- Unread document tracking — new docs shown in bold until opened
 - Annotations stored as plain JSON alongside the document —
   version-controllable, readable by Claude in future sessions
 
 ### Setup
+
+The interactive installer handles all of this. For manual setup:
 
 **1. Copy the server into your project:**
 
@@ -130,51 +170,63 @@ mkdir -p yourproject/.claude
 cp server/server.py yourproject/.claude/
 ```
 
-**2. Start it** (add to your shell profile or a startup script):
+**2. Start it:**
 
 ```bash
-cd yourproject/.claude && python3 server.py &
+python3 yourproject/.claude/server.py &
 # Serves on http://localhost:7432/
 ```
 
-**3. Add the keybinding** (VS Code / Antigravity):
+**3. Copy the manifest assets:**
 
-Add to your IDE's user `keybindings.json`:
+```bash
+mkdir -p yourproject/claude-docs
+cp server/manifest-link.js yourproject/claude-docs/
+cp templates/manifest.html yourproject/claude-docs/
+```
+
+**4. Add the keybinding** (VS Code / Antigravity) to your IDE's `keybindings.json`:
 
 ```json
 {
   "key": "alt+d",
   "command": "simpleBrowser.show",
-  "args": "http://localhost:7432/your-doc.html"
+  "args": "http://localhost:7432/manifest.html"
 }
 ```
 
-Update `args` to point at the latest document Claude generates.
-Claude can do this automatically — see step 4.
-
-**4. Add `CLAUDE.md` to your project:**
+**5. Add `CLAUDE.md` to your project:**
 
 Copy `templates/CLAUDE.md.template` to your project root as `CLAUDE.md`
 and fill in the project-specific section at the bottom.
 
-This instructs Claude to:
-- Write structured output as HTML to `.claude/`
-- Update the `Alt+D` keybinding to point at the new file
-- Post only a one-paragraph summary in chat
-- Keep responses concise and formatted for a narrow panel
-
-**5. Use the HTML template** for your own documents:
-
-`templates/review-template.html` is a self-contained starting point
-with the full CSS, card components, annotation system, and sticky
-URL bar. Copy and fill in `{{TITLE}}`, `{{DATE}}`, `{{SCOPE}}`.
-
 ### Annotation Storage
 
-Annotations are saved to `.claude/annotations/<docname>.json` via
-`POST /annotations/<docname>` on the local server. They load
-automatically when the page is opened. The JSON files are plain text
-and can be committed to git or read by Claude directly.
+Annotations are saved to `claude-docs/annotations/<docname>.json` via
+the local server. They load automatically when the page is opened.
+The JSON files are plain text and can be committed to git or read by
+Claude directly.
+
+---
+
+## Prompt Library
+
+`PROMPTS.md` defines eight standard trigger phrases and their full
+optimised instruction specs:
+
+| Trigger | Purpose |
+|---|---|
+| `session close` | Consolidate session knowledge, gate promotions to spec docs |
+| `bench plan` | Specification-first performance baseline (no results yet) |
+| `bench results` | Document measured values against the plan |
+| `project audit` | Full spec-vs-implementation gap analysis and roadmap |
+| `code quality` | Five-dimension code review — no changes made |
+| `debug plan` | Hypothesis-driven debug plan — no fixes attempted |
+| `debug results` | Confirm/rule-out hypotheses, before/after measurements |
+| `push release` | Pre-flight check, changelog, gated tag/push/publish |
+
+The manifest hub's quick-prompt bar copies any trigger to the clipboard
+with one click.
 
 ---
 
@@ -188,33 +240,37 @@ and can be committed to git or read by Claude directly.
 | Doc server (B) | ✔ | ✔ | ✔ |
 | CLAUDE.md workflow (B) | ✔ | ✔ | ✔ |
 | Alt+D keybinding (B) | ✔ | ✔ | — |
-
-The layout and vocabulary patches target the Claude Code extension's
-webview CSS/JS using content patterns rather than hashed class names,
-so they are reasonably robust across minor updates. If an update breaks
-a patch the script reports which pattern it couldn't find.
+| GUI installer | ✔ Linux binary | ✔ Linux binary | Python source |
 
 ---
 
 ## File Layout
 
 ```
-claude-code-ux/
+aur/
 ├── patches/
-│   ├── apply-all.py               run this to apply everything
+│   ├── apply-all.py               apply all IDE patches
 │   ├── claude-ui-layout.py        chat panel margins, dot, scrollbar
 │   ├── claude-ui-vocabulary.py    replace cycling word list
-│   └── simplebrowser-title.py     tab title fix (VS Code + forks, sudo)
+│   └── simplebrowser-title.py     tab title fix (VS Code + forks)
 ├── server/
-│   └── server.py                  annotation-capable doc server
+│   ├── server.py                  annotation-capable doc server
+│   ├── manifest-link.js           injected bar script for all docs
+│   └── tasks.json.template        VS Code auto-start task
 ├── templates/
 │   ├── CLAUDE.md.template         project instructions for Claude
+│   ├── manifest.html              document hub with prompt bar
 │   └── review-template.html       styled HTML review doc template
-└── keybindings/
-    └── antigravity.json           Alt+D binding example
+├── keybindings/
+│   └── antigravity.json           Alt+D binding example
+├── install.py                     CLI installer
+├── install-gui.py                 GUI installer (tkinter)
+├── PROJECT.md                     vision, goals, roadmap
+├── PROMPTS.md                     canonical prompt library
+├── PATCHES.md                     patch technical specifications
+├── WORKFLOW.md                    review document workflow spec
+└── RELEASE.md                     release and distribution process
 ```
-
----
 
 ---
 

@@ -34,6 +34,23 @@ alternatives, not receive an immediate implementation.
 All-caps `.md` files (PROJECT.md, PROMPTS.md, PATCHES.md, WORKFLOW.md) are owner's specs.
 Assist with formatting, presentation, and semantic completeness only — no decisions.
 
+## Release Process
+
+When the user triggers `push release`, follow RELEASE.md exactly. Key steps:
+
+1. **Build binary** — `pyinstaller --onefile --windowed --name claude-ux-installer install-gui.py`
+   Output at `dist/claude-ux-installer`. Do not commit it.
+2. **Source zip** — zip `patches/ server/ templates/ keybindings/ install.py install-gui.py
+   README.md LICENSE PROJECT.md PROMPTS.md PATCHES.md WORKFLOW.md RELEASE.md`
+   excluding `*.bak __pycache__/ *.pyc`. Save to `/tmp/claude-ux-refined-vX.Y.Z-source.zip`.
+3. **Tag** — `git tag vX.Y.Z && git push origin vX.Y.Z`
+4. **Release** — `gh release create vX.Y.Z --title "..." --notes "..."`
+5. **Upload** — `gh release upload vX.Y.Z dist/claude-ux-installer /tmp/claude-ux-refined-vX.Y.Z-source.zip`
+6. **Verify** — `gh release view vX.Y.Z --json assets --jq '.assets[].name'`
+
+Gate: confirm version, changelog, and pre-flight checks before any tag/push/upload.
+See RELEASE.md for the full procedure including release notes template.
+
 ## Project Context
 
 - **Language:** Python 3 (patches, server, installer)
