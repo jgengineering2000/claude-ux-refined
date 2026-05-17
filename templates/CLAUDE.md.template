@@ -13,6 +13,14 @@ Every HTML doc must include the annotation system from `templates/review-templat
 - Table section rows (single `<td colspan>`) → `✎ Annotate` button
 - `<li>` and data `<tr>` items → visible ID badge (e.g. `DG1`) + `✎` icon; stored as `item-{hi}-{n}`
 
+## Confirmation Required
+
+Never implement, edit, create, or commit anything without first stating the complete plan and receiving explicit approval. Propose → confirm → execute. No exceptions.
+
+## Triggers
+
+**prep session close** — Inventory this session's knowledge not yet promoted to specs; map each item to its target document; find and incorporate any prior unprocessed session-close docs (newer wins on conflicts); generate a merged session-close HTML for review; await explicit confirmation before executing any promotions.
+
 ## Project Context
 
 - **Doc server:** port in `.claude/server.port` (default 7432)
