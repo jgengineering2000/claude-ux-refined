@@ -2,6 +2,7 @@
 server/server.port
 **/server.port
 
-# Annotation data persisted locally — not part of the shared template
+# Annotation data and generated docs — local output, not part of the shared template
 server/annotations/
 **/.claude/annotations/
+**/claude-docs/annotations/

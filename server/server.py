@@ -30,9 +30,11 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 PREFERRED_PORT = int(os.environ.get("CLAUDE_DOC_PORT", "7432"))
-ROOT = Path(__file__).parent
-PORT_FILE = ROOT / "server.port"
+_HERE = Path(__file__).parent          # .claude/
+ROOT = _HERE.parent / "claude-docs"    # ../claude-docs/ — served output
+PORT_FILE = _HERE / "server.port"      # stays in .claude/
 ANNOTATIONS_DIR = ROOT / "annotations"
+ROOT.mkdir(exist_ok=True)
 ANNOTATIONS_DIR.mkdir(exist_ok=True)
 
 
