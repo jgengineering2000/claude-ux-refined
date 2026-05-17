@@ -71,8 +71,61 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path.startswith("/annotations/"):
             self._get_annotations(parsed.path[len("/annotations/"):])
+        elif parsed.path == "/docs":
+            self._get_docs()
         else:
             super().do_GET()
+
+    def _get_docs(self):
+        import re
+        from datetime import datetime
+        docs = []
+        for f in ROOT.glob("*.html"):
+            try:
+                content = f.read_text(encoding="utf-8", errors="ignore")
+                title_m = re.search(r"<title>([^<]+)</title>", content, re.IGNORECASE)
+                title = title_m.group(1).strip() if title_m else f.stem
+
+                ann_count = 0
+                ann_file = ANNOTATIONS_DIR / f"{f.stem}.json"
+                if ann_file.exists():
+                    try:
+                        d = json.loads(ann_file.read_text())
+                        ann_count = sum(1 for v in d.values() if str(v).strip())
+                    except Exception:
+                        pass
+
+                dt_m = re.search(
+                    r"-(\d{4})-(\d{2})-(\d{2})(?:-(\d{2})(\d{2})(\d{2}))?$", f.stem
+                )
+                if dt_m:
+                    y, mo, d2 = dt_m.group(1), dt_m.group(2), dt_m.group(3)
+                    h = dt_m.group(4) or "00"
+                    mi = dt_m.group(5) or "00"
+                    s = dt_m.group(6) or "00"
+                    dt_str = f"{y}-{mo}-{d2} {h}:{mi}:{s}"
+                    dt_ts = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S").timestamp()
+                else:
+                    dt_ts = f.stat().st_mtime
+                    dt_str = datetime.fromtimestamp(dt_ts).strftime("%Y-%m-%d %H:%M:%S")
+
+                docs.append({
+                    "filename": f.name,
+                    "datetime": dt_str,
+                    "datetime_ts": dt_ts,
+                    "title": title,
+                    "annotation_count": ann_count,
+                })
+            except Exception:
+                pass
+
+        docs.sort(key=lambda x: x["datetime_ts"], reverse=True)
+        data = json.dumps(docs).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self._cors()
+        self.end_headers()
+        self.wfile.write(data)
 
     def do_POST(self):
         parsed = urlparse(self.path)

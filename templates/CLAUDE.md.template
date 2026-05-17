@@ -8,6 +8,8 @@ Write structured output (audits, plans, reviews) as HTML to `.claude/`, post a o
 2. `PORT=$(cat .claude/server.port 2>/dev/null || echo 7432)` — set `Alt+D` keybinding to `http://localhost:${PORT}/<name>-<date>-<HHMMSS>.html`
 3. Server auto-starts via `Start Claude doc server` VSCode task; manual fallback: `python3 .claude/server.py &`
 
+Every HTML doc must include `<script src="/manifest-link.js"></script>` just before `</body>` (injects a Manifest chip into the top bar; omit only for manifest.html itself). Copy `server/manifest-link.js` and `templates/manifest.html` into your `.claude/` directory on first use.
+
 Every HTML doc must include the annotation system from `templates/review-template.html` (CSS + JS verbatim). Four targets, all via relative `/annotations/${DOC}`:
 - `.finding`/`.card` divs and `h2`/`h3` headings → `✎ Annotate` button
 - Table section rows (single `<td colspan>`) → `✎ Annotate` button
