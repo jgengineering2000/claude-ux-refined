@@ -270,6 +270,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   <strong>{title}</strong>
 </div>
 <div id="content">{body_html}</div>
+<script src="/manifest-link.js"></script>
 </body></html>"""
         data = page.encode("utf-8")
         self.send_response(200)

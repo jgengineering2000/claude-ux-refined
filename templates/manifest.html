@@ -69,8 +69,8 @@ td.spec-name a:hover{color:var(--ac);text-decoration:underline}
   <strong>Manifest</strong>
   <span id="bar-subtitle" style="color:var(--mu);font-size:11px"></span>
   <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
-    <button class="refresh-btn" id="refresh-btn">↻ Refresh</button>
-    <span id="status"></span>
+    <span id="status" style="font-size:11px;color:var(--mu);opacity:.75"></span>
+    <button class="refresh-btn" id="refresh-btn">↻</button>
   </span>
 </div>
 
@@ -293,7 +293,10 @@ async function load() {
   document.getElementById('spec-summary').textContent =
     `${specsRes.length} specification file${specsRes.length !== 1 ? 's' : ''}`;
 
-  status.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+  const now = new Date();
+  const h = now.getHours(), m = String(now.getMinutes()).padStart(2,'0');
+  const ds = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  status.textContent = `${ds} ${h%12||12}:${m}${h>=12?'pm':'am'}`;
   btn.textContent = '↻ Refresh';
 }
 
