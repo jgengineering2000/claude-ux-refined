@@ -154,6 +154,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self._cors()
         self.end_headers()
 
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def _cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -202,6 +206,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def _serve_spec(self, filename):
         import html as html_mod
+        # No path traversal
         if not filename or "/" in filename or ".." in filename or not filename.endswith(".md"):
             self.send_error(404)
             return
@@ -210,23 +215,30 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
             return
         content = md_path.read_text(encoding="utf-8", errors="ignore")
-        content_json = json.dumps(content)
+        import markdown as md_lib
+        body_html = md_lib.markdown(
+            content,
+            extensions=["tables", "fenced_code", "nl2br", "sane_lists"],
+        )
+        # Wrap every table in a scrollable div
+        body_html = body_html.replace("<table>", '<div class="tbl-wrap"><table>').replace("</table>", "</table></div>")
         title = html_mod.escape(md_path.stem)
         page = f"""<!DOCTYPE html>
 <html lang="en"><head>
-<meta charset="UTF-8"><title>{title}</title>
-<script src="/marked.min.js"></script>
+<meta charset="UTF-8">
+<title>{title} — MTI Spec</title>
 <style>
-:root{{--bg:#1e1e2e;--sf:#27273a;--bd:#3a3a55;--tx:#cdd6f4;--mu:#7f849c;
-  --ac:#89b4fa;--cb:#181825;--de:#313244;}}
+:root{{--bg:#1e1e2e;--bd:#3a3a55;--tx:#cdd6f4;--mu:#7f849c;
+  --ac:#89b4fa;--cy:#89dceb;--cb:#181825;--de:#313244;}}
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   font-size:14px;line-height:1.7;background:var(--bg);color:var(--tx);
-  padding:32px;max-width:900px;margin:0 auto}}
-.bar{{position:sticky;top:0;background:var(--cb);border-bottom:1px solid var(--bd);
-  padding:8px 16px;display:flex;align-items:center;gap:12px;
-  margin:-32px -32px 32px;font-size:12px;color:var(--mu)}}
-.bar a{{color:var(--ac);text-decoration:none}} .bar a:hover{{text-decoration:underline}}
+  padding:32px;max-width:960px;margin:0 auto}}
+.bar{{position:sticky;top:0;z-index:100;background:var(--cb);
+  border-bottom:1px solid var(--bd);padding:8px 16px;display:flex;
+  align-items:center;gap:12px;margin:-32px -32px 32px;font-size:12px;color:var(--mu)}}
+.bar a{{color:var(--ac);text-decoration:none;font-size:12px}}
+.bar a:hover{{text-decoration:underline}}
 .bar strong{{color:var(--tx)}}
 #content h1{{font-size:22px;font-weight:700;color:var(--ac);margin:24px 0 12px}}
 #content h2{{font-size:16px;font-weight:700;color:var(--ac);margin:20px 0 8px;
@@ -241,18 +253,23 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   padding:12px 14px;overflow-x:auto;margin:10px 0}}
 #content pre code{{color:var(--tx);font-size:12px}}
 .tbl-wrap{{overflow-x:auto;margin:10px 0}}
-.tbl-wrap table{{width:100%;border-collapse:collapse;font-size:13px;margin:0}}
+.tbl-wrap table{{border-collapse:collapse;font-size:13px;white-space:nowrap}}
 #content th{{background:var(--de);color:var(--mu);font-size:11px;font-weight:700;
-  text-align:left;padding:7px 10px;border-bottom:2px solid var(--bd);white-space:nowrap}}
+  text-align:left;padding:7px 10px;border-bottom:2px solid var(--bd)}}
 #content td{{padding:7px 10px;border-bottom:1px solid var(--bd);vertical-align:top}}
-#content blockquote{{border-left:3px solid var(--ac);margin:10px 0;padding:4px 14px;color:var(--mu)}}
-#content a{{color:var(--ac)}} #content strong{{color:var(--tx);font-weight:600}}
+#content tr:hover td{{background:rgba(137,180,250,.04)}}
+#content blockquote{{border-left:3px solid var(--ac);margin:10px 0;
+  padding:4px 14px;color:var(--mu)}}
+#content a{{color:var(--ac)}}
+#content strong{{color:var(--tx);font-weight:600}}
 #content hr{{border:none;border-top:1px solid var(--bd);margin:20px 0}}
-</style></head><body>
-<div class="bar"><a href="/manifest.html">← Manifest</a><strong>{title}</strong></div>
-<div id="content"></div>
-<script>const md={content_json};marked.setOptions({{gfm:true,breaks:false}});
-document.getElementById('content').innerHTML=marked.parse(md);</script>
+</style></head>
+<body>
+<div class="bar">
+  <a href="/manifest.html">← Manifest</a>
+  <strong>{title}</strong>
+</div>
+<div id="content">{body_html}</div>
 </body></html>"""
         data = page.encode("utf-8")
         self.send_response(200)
