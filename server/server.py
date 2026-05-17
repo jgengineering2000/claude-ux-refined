@@ -215,13 +215,25 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
             return
         content = md_path.read_text(encoding="utf-8", errors="ignore")
-        import markdown as md_lib
+        import markdown as md_lib, re as _re
+        from datetime import datetime as _dt
+        # Strip code fences that wrap pipe tables so they render as HTML tables.
+        # Other code blocks (C, bash, etc.) are preserved intact.
+        def _strip_table_fences(text):
+            def _check(m):
+                inner = m.group(1)
+                return inner if inner.strip().startswith("|") else m.group(0)
+            return _re.sub(r"```[^\n]*\n(.*?)```", _check, text, flags=_re.DOTALL)
         body_html = md_lib.markdown(
-            content,
+            _strip_table_fences(content),
             extensions=["tables", "fenced_code", "nl2br", "sane_lists"],
         )
         # Wrap every table in a scrollable div
         body_html = body_html.replace("<table>", '<div class="tbl-wrap"><table>').replace("</table>", "</table></div>")
+        # File mtime formatted as YYYY-MM-DD H:MMam/pm for the bar
+        _mt = _dt.fromtimestamp(md_path.stat().st_mtime)
+        _h  = _mt.hour
+        ts_str = f"{_mt.year}-{_mt.month:02d}-{_mt.day:02d} {_h%12 or 12}:{_mt.minute:02d}{'pm' if _h>=12 else 'am'}"
         title = html_mod.escape(md_path.stem)
         page = f"""<!DOCTYPE html>
 <html lang="en"><head>
@@ -268,9 +280,12 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 <div class="bar">
   <a href="/manifest.html">← Manifest</a>
   <strong>{title}</strong>
+  <span class="doc-right" style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0">
+    <span style="font-size:11px;color:var(--mu);opacity:.75">{ts_str}</span>
+    <button onclick="location.reload()" style="background:none;border:1px solid var(--bd);color:var(--mu);font-size:11px;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit" onmouseenter="this.style.borderColor='var(--ac)';this.style.color='var(--ac)'" onmouseleave="this.style.borderColor='var(--bd)';this.style.color='var(--mu)'">↻ Refresh</button>
+  </span>
 </div>
 <div id="content">{body_html}</div>
-<script src="/manifest-link.js"></script>
 </body></html>"""
         data = page.encode("utf-8")
         self.send_response(200)

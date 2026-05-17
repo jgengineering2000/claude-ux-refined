@@ -1,6 +1,6 @@
 // Injects into the .bar of every Claude doc page:
-//   LEFT  — "Manifest" chip (skipped if page already has a link to /manifest.html)
-//   RIGHT — document generation timestamp (from filename) + ↻ reload button
+//   LEFT  — "← Manifest" plain link (skipped if page already has one)
+//   RIGHT — document generation timestamp (from filename) + ↻ Refresh button
 // Skips entirely on manifest.html itself.
 (function () {
   if (window.location.pathname.endsWith('/manifest.html')) return;
@@ -14,11 +14,17 @@
            (h % 12 || 12) + ':' + m[5] + (h >= 12 ? 'pm' : 'am');
   }
 
+  function linkStyle(el) {
+    el.style.cssText =
+      'font-size:12px;color:var(--ac,#89b4fa);text-decoration:none;flex-shrink:0;white-space:nowrap';
+    el.onmouseenter = function () { this.style.textDecoration = 'underline'; };
+    el.onmouseleave = function () { this.style.textDecoration = 'none'; };
+  }
+
   function chipStyle(el) {
     el.style.cssText =
-      'font-size:11px;color:var(--mu,#7f849c);text-decoration:none;background:none;' +
-      'border:1px solid var(--bd,#3a3a55);padding:2px 8px;border-radius:4px;' +
-      'flex-shrink:0;font-family:inherit;white-space:nowrap;cursor:pointer';
+      'background:none;border:1px solid var(--bd,#3a3a55);color:var(--mu,#7f849c);' +
+      'font-size:11px;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;flex-shrink:0';
     el.onmouseenter = function () {
       this.style.borderColor = 'var(--ac,#89b4fa)';
       this.style.color = 'var(--ac,#89b4fa)';
@@ -33,19 +39,17 @@
     var bar = document.querySelector('.bar');
     if (!bar) return;
 
-    // ── Left: Manifest link — skip if bar already has one ────────────────
-    var hasManifestLink = bar.querySelector('a[href="/manifest.html"]');
-    if (!hasManifestLink) {
+    // ── Left: ← Manifest link — skip if bar already has one ─────────────
+    if (!bar.querySelector('a[href="/manifest.html"]')) {
       var a = document.createElement('a');
       a.className = 'manifest-link';
       a.href = '/manifest.html';
-      a.textContent = 'Manifest';
-      a.title = 'All documents';
-      chipStyle(a);
+      a.textContent = '← Manifest';
+      linkStyle(a);
       bar.insertBefore(a, bar.firstChild);
     }
 
-    // ── Right: timestamp + reload button — skip if already injected ───────
+    // ── Right: timestamp + ↻ Refresh — skip if already injected ──────────
     if (bar.querySelector('.doc-right')) return;
 
     var dtStr = parseDateFromPath();
@@ -62,8 +66,7 @@
     }
 
     var btn = document.createElement('button');
-    btn.textContent = '↻';
-    btn.title = 'Reload page';
+    btn.textContent = '↻ Refresh';
     chipStyle(btn);
     btn.onclick = function () { window.location.reload(); };
     right.appendChild(btn);
