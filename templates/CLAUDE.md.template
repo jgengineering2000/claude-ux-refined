@@ -1,0 +1,38 @@
+# Project — Claude Instructions
+
+## Generated Documents
+
+Write structured output (audits, plans, reviews) as HTML to `claude-docs/`, post a one-paragraph summary + link in chat, tell the user **Alt+D**. Never paste document content into chat.
+
+- `.claude/` — server binary, config, port file (infrastructure only)
+- `claude-docs/` — all generated HTML documents and annotations (output/product)
+
+1. Write `claude-docs/<name>-<date>-<HHMMSS>.html` (seconds precision avoids multi-session collisions)
+2. `PORT=$(cat .claude/server.port 2>/dev/null || echo 7432)` — set `Alt+D` keybinding to `http://localhost:${PORT}/<name>-<date>-<HHMMSS>.html`
+3. Server auto-starts via `Start Claude doc server` VSCode task; manual fallback: `python3 .claude/server.py &`
+
+Every HTML doc must include `<script src="/manifest-link.js"></script>` just before `</body>` (injects Manifest link on left + refresh/timestamp on right of every doc bar; omit only for manifest.html itself). On first use copy `server/manifest-link.js`, `templates/manifest.html` into `claude-docs/`, and download `marked.min.js` into `claude-docs/`:
+`curl -s https://cdn.jsdelivr.net/npm/marked@9/marked.min.js -o claude-docs/marked.min.js`
+
+Every HTML doc must include the annotation system from `templates/review-template.html` (CSS + JS verbatim). Four targets, all via relative `/annotations/${DOC}`:
+- `.finding`/`.card` divs and `h2`/`h3` headings → `✎ Annotate` button
+- Table section rows (single `<td colspan>`) → `✎ Annotate` button
+- `<li>` and data `<tr>` items → visible ID badge (e.g. `DG1`) + `✎` icon; stored as `item-{hi}-{n}`
+
+## Confirmation Required
+
+Never implement, edit, create, or commit anything without first stating the complete plan and receiving explicit approval. Propose → confirm → execute. No exceptions.
+
+## Triggers
+
+**prep session close** — Inventory this session's knowledge not yet promoted to specs; map each item to its target document; find and incorporate any prior unprocessed session-close docs (newer wins on conflicts); generate a merged session-close HTML for review; await explicit confirmation before executing any promotions.
+
+## Project Context
+
+- **Doc server:** port in `.claude/server.port` (default 7432)
+- **Keybinding:** `Alt+D` → Simple Browser
+- **Spec docs:** All-caps `.md` files are owner's specs — formatting/completeness only, no decisions
+- **Updates:** 1–12 words every 15–30 s during long tasks
+- **Format:** Short paragraphs, no wall-to-wall prose
+
+## Add project-specific context below this line

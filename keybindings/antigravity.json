@@ -1,0 +1,10 @@
+// Add to ~/.config/Antigravity/User/keybindings.json
+// Opens the latest Claude review document in Jetski (Simple Browser).
+// Update the URL whenever Claude generates a new document.
+[
+  {
+    "key": "alt+d",
+    "command": "simpleBrowser.show",
+    "args": "http://localhost:7432/your-doc.html"
+  }
+]
