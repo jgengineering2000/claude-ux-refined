@@ -26,6 +26,7 @@ import os
 import signal
 import socket
 import sys
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -36,6 +37,7 @@ PORT_FILE = _HERE / "server.port"      # stays in .claude/
 ANNOTATIONS_DIR = ROOT / "annotations"
 ROOT.mkdir(exist_ok=True)
 ANNOTATIONS_DIR.mkdir(exist_ok=True)
+READS_FILE = ANNOTATIONS_DIR / "reads.json"
 
 
 def find_free_port(preferred: int, limit: int = 100) -> int:
@@ -82,11 +84,29 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         elif parsed.path.startswith("/spec/"):
             self._serve_spec(parsed.path[len("/spec/"):])
         else:
+            p = parsed.path
+            if p.endswith(".html") and p not in ("/manifest.html",):
+                stem = p.lstrip("/")[:-5]
+                if stem:
+                    self._track_read(stem)
             super().do_GET()
+
+    def _track_read(self, stem):
+        try:
+            reads = json.loads(READS_FILE.read_text()) if READS_FILE.exists() else {}
+            reads[stem] = datetime.now().isoformat()
+            READS_FILE.write_text(json.dumps(reads, indent=2))
+        except Exception:
+            pass
 
     def _get_docs(self):
         import re
-        from datetime import datetime
+        reads = {}
+        if READS_FILE.exists():
+            try:
+                reads = json.loads(READS_FILE.read_text())
+            except Exception:
+                pass
         docs = []
         for f in ROOT.glob("*.html"):
             if f.name == "manifest.html":
@@ -130,6 +150,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     "datetime_ts": dt_ts,
                     "title": title,
                     "annotation_count": ann_count,
+                    "last_read": reads.get(f.stem),
                 })
             except Exception:
                 pass

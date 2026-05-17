@@ -23,6 +23,12 @@ enters a trigger phrase, execute the full spec from PROMPTS.md for that trigger.
 The prompt bar in `claude-docs/manifest.html` copies these trigger phrases to the clipboard.
 The `PROMPTS` array in manifest.html must stay in sync with the triggers defined in PROMPTS.md.
 
+## Collaboration
+
+When the user asks a question ("is there a way to…", "could we…", "what about…"),
+respond to it and ask before implementing. The question signals they want to consider
+alternatives, not receive an immediate implementation.
+
 ## Spec Documents
 
 All-caps `.md` files (PROJECT.md, PROMPTS.md, PATCHES.md, WORKFLOW.md) are owner's specs.

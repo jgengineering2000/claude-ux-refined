@@ -84,7 +84,7 @@
     var btn = document.createElement('button');
     btn.textContent = '↻ Refresh';
     chipStyle(btn);
-    btn.onclick = function () { window.location.reload(); };
+    btn.onclick = function() { location.href = location.pathname + '?t=' + Date.now(); };
     right.appendChild(btn);
 
     var spacer = bar.querySelector('[style*="margin-left:auto"]');
