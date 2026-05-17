@@ -16,10 +16,13 @@ Targets (auto-detected):
   VS Code:       /usr/share/code/resources/app/extensions/simple-browser/dist/extension.js
   VS Code (snap):/snap/code/current/usr/share/code/resources/app/extensions/simple-browser/dist/extension.js
 
-REQUIRES SUDO — these files are system-owned.
+Requires write access to the target file. System-installed (apt/dpkg) builds
+own those files as root, so sudo is needed there. User-local installs
+(AppImage, ~/.local/) are writable without elevation.
 
 Usage:
-    sudo python3 simplebrowser-title.py
+    python3 simplebrowser-title.py          # user-local install
+    sudo python3 simplebrowser-title.py     # system (apt) install
 """
 
 import shutil
@@ -75,6 +78,15 @@ def main():
         print("No Simple Browser extension found at known paths.")
         print("Searched:")
         for p in CANDIDATES:
+            print(f"  {p}")
+        sys.exit(1)
+
+    # Warn early if any target needs elevated access we don't have
+    import os
+    unwritable = [p for p in targets if not os.access(p, os.W_OK)]
+    if unwritable:
+        print("The following file(s) require elevated access (re-run with sudo):")
+        for p in unwritable:
             print(f"  {p}")
         sys.exit(1)
 
