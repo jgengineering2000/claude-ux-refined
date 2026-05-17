@@ -226,7 +226,7 @@ function renderSpecRow(spec) {
   tr.dataset.description = spec.description.toLowerCase();
   tr.innerHTML =
     `<td class="dt">${fmtDatetime(spec.mtime)}</td>` +
-    `<td class="spec-name"><a href="/spec/${spec.filename}" target="_blank">${spec.filename}</a></td>` +
+    `<td class="spec-name"><a href="/spec/${spec.filename}">${spec.filename}</a></td>` +
     `<td class="desc">${spec.description}</td>`;
   return tr;
 }
