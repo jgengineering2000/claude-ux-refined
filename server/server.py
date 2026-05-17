@@ -215,7 +215,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         page = f"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><title>{title}</title>
-<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+<script src="/marked.min.js"></script>
 <style>
 :root{{--bg:#1e1e2e;--sf:#27273a;--bd:#3a3a55;--tx:#cdd6f4;--mu:#7f849c;
   --ac:#89b4fa;--cb:#181825;--de:#313244;}}
