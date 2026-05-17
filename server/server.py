@@ -75,6 +75,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._get_annotations(parsed.path[len("/annotations/"):])
         elif parsed.path == "/docs":
             self._get_docs()
+        elif parsed.path == "/meta":
+            self._get_meta()
         elif parsed.path == "/spec/":
             self._get_spec_list()
         elif parsed.path.startswith("/spec/"):
@@ -87,6 +89,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         from datetime import datetime
         docs = []
         for f in ROOT.glob("*.html"):
+            if f.name == "manifest.html":
+                continue
             try:
                 content = f.read_text(encoding="utf-8", errors="ignore")
                 title_m = re.search(r"<title>([^<]+)</title>", content, re.IGNORECASE)
@@ -154,6 +158,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
+
+    def _get_meta(self):
+        data = json.dumps({"project": ROOT.parent.name.upper()}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self._cors()
+        self.end_headers()
+        self.wfile.write(data)
 
     def _get_spec_list(self):
         import re

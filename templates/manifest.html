@@ -34,8 +34,8 @@ td{padding:7px 10px;border-bottom:1px solid var(--bd);vertical-align:middle}
 tr:hover td{background:rgba(137,180,250,.04)}
 td.dt{font-family:"SF Mono","Fira Code",Consolas,monospace;font-size:11px;
   color:var(--mu);white-space:nowrap}
-td.name a{color:var(--tx);text-decoration:none;font-weight:500}
-td.name a:hover{color:var(--ac);text-decoration:underline}
+td.name a{color:var(--ac);text-decoration:none;font-weight:500}
+td.name a:hover{text-decoration:underline}
 td.desc{color:var(--mu);font-size:11px}
 /* Annotation badge */
 .ann-badge{display:inline-block;min-width:22px;text-align:center;
@@ -76,7 +76,7 @@ td.spec-name a:hover{color:var(--ac);text-decoration:underline}
 
 <div id="ann-pop"></div>
 
-<h1>Document Manifest</h1>
+<h1 id="page-title">Document Manifest</h1>
 <div class="meta" id="doc-summary">Loading…</div>
 
 <h2>Development Documents</h2>
@@ -260,10 +260,17 @@ async function load() {
   const btn = document.getElementById('refresh-btn');
   btn.textContent = '↻'; status.textContent = 'Fetching…';
 
-  const [docsRes, specsRes] = await Promise.all([
+  const [docsRes, specsRes, metaRes] = await Promise.all([
     fetch('/docs').then(r => r.json()).catch(() => []),
     fetch('/spec/').then(r => r.json()).catch(() => []),
+    fetch('/meta').then(r => r.json()).catch(() => ({})),
   ]);
+
+  if (metaRes.project) {
+    const title = document.getElementById('page-title');
+    title.textContent = `${metaRes.project} — Document Manifest`;
+    document.title = `${metaRes.project} — Document Manifest`;
+  }
 
   // Docs
   const tbody = document.getElementById('doc-tbody');
