@@ -160,7 +160,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
 
     def _get_meta(self):
-        data = json.dumps({"project": ROOT.parent.name.upper()}).encode()
+        data = json.dumps({
+            "project":  ROOT.parent.name.upper(),
+            "subtitle": f"{ROOT.parent.name}/{ROOT.name}",
+        }).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self._cors()
@@ -212,7 +215,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         page = f"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><title>{title}</title>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 <style>
 :root{{--bg:#1e1e2e;--sf:#27273a;--bd:#3a3a55;--tx:#cdd6f4;--mu:#7f849c;
   --ac:#89b4fa;--cb:#181825;--de:#313244;}}
@@ -233,14 +236,14 @@ body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 #content p{{margin-bottom:10px}}
 #content ul,#content ol{{padding-left:22px;margin-bottom:10px}}
 #content li{{margin-bottom:4px}}
-#content code{{background:var(--cb);border:1px solid var(--bd);border-radius:3px;
-  padding:1px 5px;font-family:"SF Mono","Fira Code",Consolas,monospace;font-size:12px}}
+#content code{{color:var(--cy);font-family:"SF Mono","Fira Code",Consolas,monospace;font-size:12px}}
 #content pre{{background:var(--cb);border:1px solid var(--bd);border-radius:4px;
   padding:12px 14px;overflow-x:auto;margin:10px 0}}
-#content pre code{{border:none;padding:0;font-size:12px}}
-#content table{{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}}
+#content pre code{{color:var(--tx);font-size:12px}}
+.tbl-wrap{{overflow-x:auto;margin:10px 0}}
+.tbl-wrap table{{width:100%;border-collapse:collapse;font-size:13px;margin:0}}
 #content th{{background:var(--de);color:var(--mu);font-size:11px;font-weight:700;
-  text-align:left;padding:7px 10px;border-bottom:2px solid var(--bd)}}
+  text-align:left;padding:7px 10px;border-bottom:2px solid var(--bd);white-space:nowrap}}
 #content td{{padding:7px 10px;border-bottom:1px solid var(--bd);vertical-align:top}}
 #content blockquote{{border-left:3px solid var(--ac);margin:10px 0;padding:4px 14px;color:var(--mu)}}
 #content a{{color:var(--ac)}} #content strong{{color:var(--tx);font-weight:600}}
