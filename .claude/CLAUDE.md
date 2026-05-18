@@ -29,6 +29,12 @@ An explicit command ("go", "do it", "implement X") is approval to proceed. A que
 a problem description, or an implied need — even when the solution is obvious — requires
 stating the plan first and waiting for endorsement before touching anything.
 
+Fixups and workarounds are a signal that something upstream needs to be done correctly.
+Before implementing any post-processing patch or workaround: exhaust the clean path first
+(configure the tool, find the right API, use the right option). If no clean solution is
+apparent, consult rather than patch. A workaround that lands in the codebase will be
+read by future maintainers as the intended design.
+
 ## Spec Documents
 
 All-caps `.md` files (PROJECT.md, PROMPTS.md, PATCHES.md, WORKFLOW.md) are owner's specs.
