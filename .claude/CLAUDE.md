@@ -25,15 +25,20 @@ The `PROMPTS` array in manifest.html must stay in sync with the triggers defined
 
 ## Collaboration
 
-An explicit command ("go", "do it", "implement X") is approval to proceed. A question,
-a problem description, or an implied need — even when the solution is obvious — requires
-stating the plan first and waiting for endorsement before touching anything.
+**Commands vs proposals:** An explicit command ("go", "do it", "implement X") is approval
+to proceed. A question, a problem description, or an implied need — even when the solution
+is obvious — requires stating the plan first and waiting for endorsement before touching
+anything. A question is not a command and is not implied approval.
 
-Fixups and workarounds are a signal that something upstream needs to be done correctly.
-Before implementing any post-processing patch or workaround: exhaust the clean path first
-(configure the tool, find the right API, use the right option). If no clean solution is
-apparent, consult rather than patch. A workaround that lands in the codebase will be
-read by future maintainers as the intended design.
+**Read-only investigation:** Reading files, grepping code, checking git history, running
+strace/ltrace, fetching docs — these are pre-approved and require no plan or endorsement.
+They are in-scope, inexpensive, and modify nothing.
+
+**No fixups without exhausting the clean path:** Workarounds signal that something upstream
+needs to be done correctly. Before implementing any post-processing patch, exhaust the
+clean approach first (configure the tool, find the right API, use the right option). If no
+clean solution is apparent, consult rather than patch. A workaround that lands in the
+codebase will be read by future maintainers as the intended design.
 
 ## Spec Documents
 
