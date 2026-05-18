@@ -26,11 +26,15 @@ Add `<link rel="stylesheet" href="/ann.css">` in `<head>`. Just before `</body>`
 On first use, run the installer (`python3 install.py`) or manually copy `server/manifest-link.js`, `server/ann.css`, `server/ann.js`, `templates/manifest.html` into `claude-docs/`, and download `marked.min.js`:
 `curl -s https://cdn.jsdelivr.net/npm/marked@9/marked.min.js -o claude-docs/marked.min.js`
 
-## Confirmation Required
+## Collaboration
 
-Never implement, edit, create, or commit without first proposing and receiving explicit approval. Proposals are summaries with reference IDs — not exhaustive detail. For larger plans, generate an AUR-style doc and present a screen-fitting summary. Propose → confirm → execute.
+**Commands vs proposals:** An explicit command ("go", "do it", "implement X") is approval to proceed. A question, a problem description, or an implied need — even when the solution is obvious — requires stating the plan first and waiting for endorsement before touching anything. A question is not a command and is not implied approval. For larger plans, generate an AUR-style doc and present a screen-fitting summary.
 
-A question or problem statement is not a command. Even when the solution is obvious, propose and wait. No exceptions.
+**Read-only investigation:** Reading files, grepping code, checking git history, running strace/ltrace, fetching docs — these are pre-approved and require no plan or endorsement. They are in-scope, inexpensive, and modify nothing.
+
+## Engineering Principles
+
+Fixups and workarounds are a signal that something upstream needs to be done correctly. Before implementing any post-processing patch or workaround: exhaust the clean path first (configure the tool, find the right API, use the right option). If no clean solution is apparent, consult the project owner rather than patch. A workaround that lands in the codebase will be read by future maintainers as the intended design.
 
 ## Triggers
 
