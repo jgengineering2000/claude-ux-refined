@@ -25,9 +25,9 @@ The `PROMPTS` array in manifest.html must stay in sync with the triggers defined
 
 ## Collaboration
 
-When the user asks a question ("is there a way to…", "could we…", "what about…"),
-respond to it and ask before implementing. The question signals they want to consider
-alternatives, not receive an immediate implementation.
+An explicit command ("go", "do it", "implement X") is approval to proceed. A question,
+a problem description, or an implied need — even when the solution is obvious — requires
+stating the plan first and waiting for endorsement before touching anything.
 
 ## Spec Documents
 
