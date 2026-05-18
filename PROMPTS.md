@@ -26,14 +26,21 @@ promotions to specification documents are executed.
 > 4. Generate a session-close review document with:
 >    - Master table — ID | Source | Knowledge Item | Target Document | Action | Notes
 >    - Per-item draft cards for every "ready-to-promote" and "needs-verification" entry.
->      Each card must include three header fields before the description:
->      - **Function** — which system component or subsystem is affected
->        (e.g. "FUSE thumbnail serving", "D-Bus signaling", "sidecar IPC")
->      - **Stage** — which project phase, milestone, or workflow step this touches
->        (e.g. "Installation prerequisite", "Phase 3 performance", "Documentation only")
->      - **Risk** — consequence of promoting vs. not promoting; flag correctness and
->        architecture risks explicitly; use "Documentation gap — no correctness risk"
->        when the item is safe to defer
+>      Each card must include four header fields before the description so the user
+>      can evaluate the item without digging into source code or spec docs:
+>      - **Code state** — what the implementation currently does, in present tense
+>        (e.g. "mti-fuse currently returns ENOENT on generation failure"). Must be
+>        verifiable and specific enough to challenge if wrong.
+>      - **Spec state** — what the target document currently says, or explicitly note
+>        that it is silent on this point (e.g. "MES.md §8 has no mention of this
+>        behaviour" or "DESIGN.md §8 currently says X, which contradicts the code").
+>      - **After approval** — exactly what changes in the spec: add a new section,
+>        correct an existing claim, record an empirical measurement, or note a
+>        design decision. Show the specific paragraph or bullet that will be inserted.
+>      - **Interpretation** — one of: Design decision | Empirical result |
+>        Bug workaround | Documented fix | Open question. This tells the user
+>        whether they are endorsing an architectural choice, recording a fact,
+>        acknowledging a known issue, or something that needs investigation first.
 >    - Proposed next actions, priority-ordered
 > 5. Do not promote anything. Await explicit confirmation for each promotion.
 
