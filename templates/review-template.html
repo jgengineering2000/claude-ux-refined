@@ -327,6 +327,7 @@ document.querySelectorAll('.finding,.card').forEach((c, i) => {
 
 // ── Phase 2: h2 / h3 headings ─────────────────────────────────────────────
 allH.forEach((h, i) => {
+  if (h.closest('.card')) return;
   const id = `head-${i}`, btn = document.createElement('button');
   btn.className = 'ann-btn'; btn.textContent = '✎ Annotate'; h.appendChild(btn);
   const wrap = mkWrap('Section note…'); h.insertAdjacentElement('afterend', wrap); h.dataset.annId = id;

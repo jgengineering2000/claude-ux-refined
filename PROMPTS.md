@@ -25,8 +25,15 @@ promotions to specification documents are executed.
 >    unresolved items into this inventory (newer source wins on conflicts).
 > 4. Generate a session-close review document with:
 >    - Master table — ID | Source | Knowledge Item | Target Document | Action | Notes
->    - Per-item draft cards for every "ready-to-promote" entry (paste-ready text)
->    - Verification question cards for "needs-verification" entries
+>    - Per-item draft cards for every "ready-to-promote" and "needs-verification" entry.
+>      Each card must include three header fields before the description:
+>      - **Function** — which system component or subsystem is affected
+>        (e.g. "FUSE thumbnail serving", "D-Bus signaling", "sidecar IPC")
+>      - **Stage** — which project phase, milestone, or workflow step this touches
+>        (e.g. "Installation prerequisite", "Phase 3 performance", "Documentation only")
+>      - **Risk** — consequence of promoting vs. not promoting; flag correctness and
+>        architecture risks explicitly; use "Documentation gap — no correctness risk"
+>        when the item is safe to defer
 >    - Proposed next actions, priority-ordered
 > 5. Do not promote anything. Await explicit confirmation for each promotion.
 
