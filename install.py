@@ -186,6 +186,8 @@ def install_review_infra(project_dir, do_claude_md):
     files = [
         (HERE / "server" / "server.py",         claude_dir / "server.py"),
         (HERE / "server" / "manifest-link.js",  docs_dir / "manifest-link.js"),
+        (HERE / "server" / "ann.css",           docs_dir / "ann.css"),
+        (HERE / "server" / "ann.js",            docs_dir / "ann.js"),
         (HERE / "templates" / "manifest.html",  docs_dir / "manifest.html"),
     ]
     for src, dst in files:
