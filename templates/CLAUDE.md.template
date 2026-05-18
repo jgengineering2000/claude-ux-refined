@@ -17,11 +17,13 @@ Every HTML doc must include `<script src="/manifest-link.js"></script>` just bef
 Every HTML doc must include the annotation system from `templates/review-template.html` (CSS + JS verbatim). Four targets, all via relative `/annotations/${DOC}`:
 - `.finding`/`.card` divs and `h2`/`h3` headings → `✎ Annotate` button
 - Table section rows (single `<td colspan>`) → `✎ Annotate` button
-- `<li>` and data `<tr>` items → visible ID badge (e.g. `DG1`) + `✎` icon; stored as `item-{hi}-{n}`
+- `<li>` and data `<tr>` items → visible ID badge (e.g. `DG1`) + `✎` icon; keyed by hierarchical heading path
 
 ## Confirmation Required
 
-Never implement, edit, create, or commit anything without first stating the complete plan and receiving explicit approval. Propose → confirm → execute. No exceptions.
+Never implement, edit, create, or commit without first proposing and receiving explicit approval. Proposals are summaries with reference IDs — not exhaustive detail. For larger plans, generate an AUR-style doc and present a screen-fitting summary. Propose → confirm → execute.
+
+A question or problem statement is not a command. Even when the solution is obvious, propose and wait. No exceptions.
 
 ## Triggers
 

@@ -139,7 +139,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     mi = dt_m.group(5) or "00"
                     s = dt_m.group(6) or "00"
                     dt_str = f"{y}-{mo}-{d2} {h}:{mi}:{s}"
-                    dt_ts = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S").timestamp()
+                    dt_ts = max(datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S").timestamp(),
+                                f.stat().st_mtime)
                 else:
                     dt_ts = f.stat().st_mtime
                     dt_str = datetime.fromtimestamp(dt_ts).strftime("%Y-%m-%d %H:%M:%S")
