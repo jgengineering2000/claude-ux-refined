@@ -128,9 +128,201 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', inject);
-  } else {
+  // ── Find in page ─────────────────────────────────────────────────────────
+  // VSCode's Simple Browser captures the browser's native Ctrl+F, leaving
+  // the doc unsearchable. This overlay restores find-in-page:
+  //   Ctrl+F / Cmd+F → open      Enter → next      Shift+Enter → prev
+  //   F3 / Ctrl+G    → next      Esc   → close
+  var findState = { box: null, matches: [], idx: -1, query: '' };
+  var FIND_SKIP = '.bar, #ann-pop, .ann-badge, .ann-btn, #find-box, script, style';
+
+  function buildFindWidget() {
+    var st = document.createElement('style');
+    st.textContent =
+      'mark.findhl{background:rgba(249,226,175,.35);color:inherit;padding:0;border-radius:2px}' +
+      'mark.findhl-current{background:rgba(249,226,175,.9);color:var(--bg,#1e1e2e);' +
+      'outline:1px solid var(--am,#f9e2af)}' +
+      '#find-box button:hover{border-color:var(--ac,#89b4fa)!important;color:var(--ac,#89b4fa)!important}';
+    document.head.appendChild(st);
+
+    var box = document.createElement('div');
+    box.id = 'find-box';
+    box.style.cssText =
+      'position:fixed;top:48px;right:16px;z-index:200;display:none;' +
+      'background:var(--cb,#181825);border:1px solid var(--bd,#3a3a55);' +
+      'border-radius:6px;padding:6px 8px;gap:6px;align-items:center;' +
+      'box-shadow:0 4px 14px rgba(0,0,0,.45);font-size:12px';
+    box.innerHTML =
+      '<input id="find-q" type="text" placeholder="Find in page" ' +
+      'style="background:var(--sf,#27273a);border:1px solid var(--bd,#3a3a55);' +
+      'color:var(--tx,#cdd6f4);font-size:12px;padding:3px 7px;border-radius:3px;' +
+      'width:170px;outline:none;font-family:inherit">' +
+      '<span id="find-count" style="color:var(--mu,#7f849c);font-size:11px;' +
+      'min-width:64px;text-align:right;font-family:monospace"></span>' +
+      '<button id="find-prev" title="Previous (Shift+Enter)">↑</button>' +
+      '<button id="find-next" title="Next (Enter)">↓</button>' +
+      '<button id="find-close" title="Close (Esc)">×</button>';
+    document.body.appendChild(box);
+    box.querySelectorAll('button').forEach(function (b) {
+      b.style.cssText =
+        'background:none;border:1px solid var(--bd,#3a3a55);color:var(--mu,#7f849c);' +
+        'font-size:12px;padding:1px 7px;border-radius:3px;cursor:pointer;' +
+        'font-family:inherit;line-height:1.2';
+    });
+    return box;
+  }
+
+  function clearFindHighlights() {
+    var marks = document.querySelectorAll('mark.findhl');
+    var parents = new Set();
+    marks.forEach(function (m) {
+      var p = m.parentNode;
+      if (p) {
+        p.replaceChild(document.createTextNode(m.textContent), m);
+        parents.add(p);
+      }
+    });
+    parents.forEach(function (p) { p.normalize(); });
+  }
+
+  function nodeInSkipZone(node) {
+    for (var p = node.parentNode; p && p !== document.body; p = p.parentNode) {
+      if (p.matches && p.matches(FIND_SKIP)) return true;
+    }
+    return false;
+  }
+
+  function applyFindHighlights(q) {
+    clearFindHighlights();
+    findState.matches = [];
+    findState.idx = -1;
+    findState.query = q;
+    if (!q) return;
+    var ql = q.toLowerCase();
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        if (!n.nodeValue) return NodeFilter.FILTER_REJECT;
+        if (nodeInSkipZone(n)) return NodeFilter.FILTER_REJECT;
+        return n.nodeValue.toLowerCase().indexOf(ql) >= 0
+          ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    var hits = [];
+    var n;
+    while ((n = walker.nextNode())) hits.push(n);
+    hits.forEach(function (textNode) {
+      var text = textNode.nodeValue;
+      var lower = text.toLowerCase();
+      var parent = textNode.parentNode;
+      var frag = document.createDocumentFragment();
+      var pos = 0, idx;
+      while ((idx = lower.indexOf(ql, pos)) !== -1) {
+        if (idx > pos) frag.appendChild(document.createTextNode(text.slice(pos, idx)));
+        var mk = document.createElement('mark');
+        mk.className = 'findhl';
+        mk.textContent = text.slice(idx, idx + q.length);
+        frag.appendChild(mk);
+        findState.matches.push(mk);
+        pos = idx + q.length;
+      }
+      if (pos < text.length) frag.appendChild(document.createTextNode(text.slice(pos)));
+      parent.replaceChild(frag, textNode);
+    });
+  }
+
+  function setCurrentMatch(i) {
+    var cnt = document.getElementById('find-count');
+    if (!findState.matches.length) {
+      cnt.textContent = findState.query ? 'no matches' : '';
+      return;
+    }
+    findState.matches.forEach(function (m) { m.classList.remove('findhl-current'); });
+    if (i < 0) i = findState.matches.length - 1;
+    if (i >= findState.matches.length) i = 0;
+    findState.idx = i;
+    var cur = findState.matches[i];
+    cur.classList.add('findhl-current');
+    cur.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    cnt.textContent = (i + 1) + ' / ' + findState.matches.length;
+  }
+
+  function openFind() {
+    if (!findState.box) {
+      findState.box = buildFindWidget();
+      var inp = document.getElementById('find-q');
+      var debounce;
+      inp.addEventListener('input', function () {
+        clearTimeout(debounce);
+        debounce = setTimeout(function () {
+          applyFindHighlights(inp.value);
+          if (findState.matches.length) setCurrentMatch(0);
+          else setCurrentMatch(-1);
+        }, 120);
+      });
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (findState.matches.length) setCurrentMatch(findState.idx + (e.shiftKey ? -1 : 1));
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeFind();
+        }
+      });
+      document.getElementById('find-next').onclick =
+        function () { if (findState.matches.length) setCurrentMatch(findState.idx + 1); inp.focus(); };
+      document.getElementById('find-prev').onclick =
+        function () { if (findState.matches.length) setCurrentMatch(findState.idx - 1); inp.focus(); };
+      document.getElementById('find-close').onclick = closeFind;
+    }
+    findState.box.style.display = 'flex';
+    var input = document.getElementById('find-q');
+    input.focus();
+    input.select();
+    // If a selection exists in the page, seed it
+    var sel = window.getSelection && window.getSelection().toString();
+    if (sel && sel.trim() && sel.length < 80) {
+      input.value = sel.trim();
+      applyFindHighlights(input.value);
+      if (findState.matches.length) setCurrentMatch(0);
+    }
+  }
+
+  function closeFind() {
+    if (findState.box) findState.box.style.display = 'none';
+    clearFindHighlights();
+    findState.matches = [];
+    findState.idx = -1;
+  }
+
+  function wireFindShortcuts() {
+    document.addEventListener('keydown', function (e) {
+      var k = e.key;
+      var mod = e.ctrlKey || e.metaKey;
+      if (mod && (k === 'f' || k === 'F')) {
+        e.preventDefault();
+        openFind();
+      } else if (k === 'F3' || (mod && (k === 'g' || k === 'G'))) {
+        e.preventDefault();
+        if (findState.matches.length) {
+          setCurrentMatch(findState.idx + (e.shiftKey ? -1 : 1));
+        } else {
+          openFind();
+        }
+      } else if (k === 'Escape' && findState.box && findState.box.style.display !== 'none') {
+        e.preventDefault();
+        closeFind();
+      }
+    });
+  }
+
+  function init() {
     inject();
+    wireFindShortcuts();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 }());
