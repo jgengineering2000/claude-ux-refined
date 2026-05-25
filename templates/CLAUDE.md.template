@@ -1,5 +1,18 @@
 # Project — Claude Instructions
 
+## Inheritance
+
+Universal engineering principles, collaboration rules, spec-doc rule,
+communication style, and patent-IP whitelist live in AUR's
+`claude_master.md` and are auto-loaded into every session via the
+`~/.claude/CLAUDE.md` symlink. This file contains only project-specific
+guidance.
+
+If `~/.claude/CLAUDE.md` is not a symlink to `~/develop/aur/claude_master.md`
+on this machine, `install.py` will offer to create it. Without the symlink,
+cross-project rules are not loaded and project work falls back to
+project-only context.
+
 ## Generated Documents
 
 Write structured output (audits, plans, reviews) as HTML to `claude-docs/`, post a one-paragraph summary + link in chat, tell the user **Alt+D**. Never paste document content into chat.
@@ -26,16 +39,6 @@ Add `<link rel="stylesheet" href="/ann.css">` in `<head>`. Just before `</body>`
 On first use, run the installer (`python3 install.py`) or manually copy `server/manifest-link.js`, `server/ann.css`, `server/ann.js`, `templates/manifest.html` into `claude-docs/`, and download `marked.min.js`:
 `curl -s https://cdn.jsdelivr.net/npm/marked@9/marked.min.js -o claude-docs/marked.min.js`
 
-## Collaboration
-
-**Commands vs proposals:** An explicit command ("go", "do it", "implement X") is approval to proceed. A question, a problem description, or an implied need — even when the solution is obvious — requires stating the plan first and waiting for endorsement before touching anything. A question is not a command and is not implied approval. For larger plans, generate an AUR-style doc and present a screen-fitting summary.
-
-**Read-only investigation:** Reading files, grepping code, checking git history, running strace/ltrace, fetching docs — these are pre-approved and require no plan or endorsement. They are in-scope, inexpensive, and modify nothing.
-
-## Engineering Principles
-
-Fixups and workarounds are a signal that something upstream needs to be done correctly. Before implementing any post-processing patch or workaround: exhaust the clean path first (configure the tool, find the right API, use the right option). If no clean solution is apparent, consult the project owner rather than patch. A workaround that lands in the codebase will be read by future maintainers as the intended design.
-
 ## Triggers
 
 **prep session close** — Inventory this session's knowledge not yet promoted to specs; map each item to its target document; find and incorporate any prior unprocessed session-close docs (newer wins on conflicts); generate a merged session-close HTML for review; await explicit confirmation before executing any promotions.
@@ -44,8 +47,5 @@ Fixups and workarounds are a signal that something upstream needs to be done cor
 
 - **Doc server:** port in `.claude/server.port` (default 7432)
 - **Keybinding:** `Alt+D` → Simple Browser
-- **Spec docs:** All-caps `.md` files are owner's specs — formatting/completeness only, no decisions
-- **Updates:** 1–12 words every 15–30 s during long tasks
-- **Format:** Short paragraphs, no wall-to-wall prose
 
 ## Add project-specific context below this line

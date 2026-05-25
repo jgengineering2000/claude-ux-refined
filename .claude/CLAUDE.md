@@ -1,5 +1,15 @@
 # AUR — Claude Instructions
 
+## Inheritance
+
+Universal engineering principles, collaboration rules, spec-doc rule,
+communication style, and patent-IP whitelist live in `claude_master.md` at
+this repo root, and are auto-loaded into every session via the
+`~/.claude/CLAUDE.md` symlink. This file contains only AUR-specific guidance.
+
+AUR is the authoritative source: edits to cross-project rules go into
+`claude_master.md`, not here.
+
 ## Generated Documents
 
 Write structured output (audits, plans, reviews) as HTML to `claude-docs/`, post a one-paragraph summary + link in chat, tell the user **Alt+D**. Never paste document content into chat.
@@ -22,28 +32,6 @@ enters a trigger phrase, execute the full spec from PROMPTS.md for that trigger.
 
 The prompt bar in `claude-docs/manifest.html` copies these trigger phrases to the clipboard.
 The `PROMPTS` array in manifest.html must stay in sync with the triggers defined in PROMPTS.md.
-
-## Collaboration
-
-**Commands vs proposals:** An explicit command ("go", "do it", "implement X") is approval
-to proceed. A question, a problem description, or an implied need — even when the solution
-is obvious — requires stating the plan first and waiting for endorsement before touching
-anything. A question is not a command and is not implied approval.
-
-**Read-only investigation:** Reading files, grepping code, checking git history, running
-strace/ltrace, fetching docs — these are pre-approved and require no plan or endorsement.
-They are in-scope, inexpensive, and modify nothing.
-
-**No fixups without exhausting the clean path:** Workarounds signal that something upstream
-needs to be done correctly. Before implementing any post-processing patch, exhaust the
-clean approach first (configure the tool, find the right API, use the right option). If no
-clean solution is apparent, consult rather than patch. A workaround that lands in the
-codebase will be read by future maintainers as the intended design.
-
-## Spec Documents
-
-All-caps `.md` files (PROJECT.md, PROMPTS.md, PATCHES.md, WORKFLOW.md) are owner's specs.
-Assist with formatting, presentation, and semantic completeness only — no decisions.
 
 ## Release Process
 
@@ -68,5 +56,3 @@ See RELEASE.md for the full procedure including release notes template.
 - **Config dir:** `~/.config/Antigravity/User/` (not `~/.config/Code/`)
 - **Doc server:** port in `.claude/server.port` (default 7432)
 - **Keybinding:** `Alt+D` → Antigravity Simple Browser / VS Code Simple Browser
-- **Updates:** 1–12 words every 15–30 s during long tasks
-- **Format:** Short paragraphs, no wall-to-wall prose
