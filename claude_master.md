@@ -137,7 +137,7 @@ formatting, presentation, and semantic completeness only — no decisions.
 
 **Model settings advisory — always last in the turn.** There are THREE
 independent knobs the owner sets and the assistant cannot self-change:
-**model**, **effort** (1–5), and **thinking** (on/off + depth). At the end of
+**model**, **effort** (1–6), and **thinking** (on/off + depth). At the end of
 every turn, evaluate all three against what the *next* step needs and put the
 verdict as the **final** element of the response (after the end-of-turn
 summary) so it is never missed.
@@ -167,11 +167,16 @@ owner sees the assistant's working assumption every turn:
   Then a one-line why for each knob that actually changed (skip the unchanged
   ones).
 
+**Effort scale** (post-2026-05-29 Claude Code update): `1 low`, `2 medium`,
+`3 high`, `4 extra high`, `5 max`, `6 ultracode xhigh + workflows`. Level 6
+is the new ceiling, reserved for the most demanding multi-step coding and
+workflow-driven tasks.
+
 State what's next, then the verdict block (two lines). Default mapping:
-heaviest model + high effort + thinking on for design, architecture,
-concurrency-correctness, and audits; mid model + moderate effort + thinking
-off for locked-plan mechanical work (renames, dedup, commits, running
-tests); lightest model + low effort for trivial lookups. The owner switches
+level 5–6 + heaviest model + thinking on for design, architecture,
+concurrency-correctness, audits, and demanding multi-step coding; level 2–3
++ mid model + thinking off for locked-plan mechanical work (renames, dedup,
+commits, running tests); level 1 + lightest model for trivial lookups. The owner switches
 via `/model`, `/fast`, the effort control, and the thinking toggle; this
 advisory is the only signal they get, since the assistant cannot change its
 own model/effort/thinking.
