@@ -5,31 +5,84 @@
 Apply all Claude Code UX patches.
 
 Usage:
-    python3 apply-all.py                   # layout + vocabulary (no sudo)
-    sudo python3 apply-all.py --browser    # + Simple Browser title fix
+    python3 apply-all.py              # all three patches (sudo prompted for A3 if needed)
+    python3 apply-all.py --no-browser # skip A3 (Simple Browser title)
 """
 
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
 
+# A3 target candidates — kept in sync with simplebrowser-title.py CANDIDATES.
+BROWSER_CANDIDATES = [
+    Path("/usr/share/antigravity/resources/app/extensions/simple-browser/dist/extension.js"),
+    Path("/usr/share/code/resources/app/extensions/simple-browser/dist/extension.js"),
+    Path("/snap/code/current/usr/share/code/resources/app/extensions/simple-browser/dist/extension.js"),
+]
 
-def run(script, *args):
+# GUI askpass helpers (first present wins). Used so sudo can prompt even when
+# invoked from a non-tty (IDE task, agent, cron). On a tty, the helper still
+# pops a GUI dialog — slightly nicer than a terminal prompt, and consistent.
+ASKPASS_CANDIDATES = [
+    "/usr/libexec/seahorse/ssh-askpass",
+    "/usr/lib/seahorse/ssh-askpass",
+    "/usr/bin/ssh-askpass",
+    "/usr/lib/openssh/gnome-ssh-askpass",
+    "/usr/lib/openssh/ssh-askpass",
+    "/usr/libexec/openssh/ssh-askpass",
+]
+
+
+def find_askpass():
+    for p in ASKPASS_CANDIDATES:
+        if os.access(p, os.X_OK):
+            return p
+    return None
+
+
+def run(script, *args, sudo=False, env=None):
     cmd = [sys.executable, str(HERE / script)] + list(args)
+    if sudo:
+        cmd = ["sudo", "-A", "--"] + cmd
     print(f"\n{'='*50}")
-    print(f"Running: {script}")
+    print(f"Running: {'sudo -A ' if sudo else ''}{script}")
     print('='*50)
-    subprocess.run(cmd)
+    subprocess.run(cmd, env=env)
+
+
+def browser_needs_sudo():
+    """True iff any existing A3 target is not writable by the current user."""
+    targets = [p for p in BROWSER_CANDIDATES if p.exists()]
+    if not targets:
+        return False  # nothing to patch; let the script report cleanly
+    return any(not os.access(p, os.W_OK) for p in targets)
 
 
 def main():
+    skip_browser = "--no-browser" in sys.argv
+
     run("claude-ui-layout.py")
     run("claude-ui-vocabulary.py")
 
-    if "--browser" in sys.argv:
-        run("simplebrowser-title.py")
+    if not skip_browser:
+        if browser_needs_sudo() and shutil.which("sudo"):
+            askpass = find_askpass()
+            if not askpass:
+                print("\n[A3] Simple Browser target is root-owned and no askpass "
+                      "helper found. Install one (e.g. seahorse) or run:")
+                print(f"  sudo python3 {HERE/'simplebrowser-title.py'}")
+                sys.exit(1)
+            print(f"\n[A3] Simple Browser target is root-owned — invoking via "
+                  f"sudo -A (askpass: {askpass}).")
+            env = dict(os.environ)
+            env["SUDO_ASKPASS"] = askpass
+            run("simplebrowser-title.py", sudo=True, env=env)
+        else:
+            run("simplebrowser-title.py")
 
     print("\n" + "="*50)
     print("Done. Restart the extension host:")
