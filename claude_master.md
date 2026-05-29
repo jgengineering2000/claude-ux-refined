@@ -142,25 +142,39 @@ every turn, evaluate all three against what the *next* step needs and put the
 verdict as the **final** element of the response (after the end-of-turn
 summary) so it is never missed.
 
-Use these EXACT lead phrases — the word "settings" is semantically inclusive
-of all three knobs, whereas "model is" would suggest only the model, so never
-phrase it that way:
-- If all three already fit the next step, say exactly: **"Model settings are
-  appropriate."**
-- If one or more should change, say **"Model settings change to:"** followed
-  by ALL THREE knob values (e.g. *"Model settings change to: Opus, Effort 4,
-  Thinking off."*), then a one-line why for each knob that actually changed.
-  Always list all three values after the colon so the owner sets a complete,
-  unambiguous state — even the knobs staying the same — but only justify the
-  deltas.
+**Visibility caveat.** The assistant can only see **model** directly (it's
+surfaced in system context). **Effort** and **thinking** have no readout —
+the assistant carries the owner's last-stated values forward as an
+assumption. Printing those values back every turn lets the owner spot a
+stale assumption immediately and correct it before the assistant acts on it.
 
-State what's next, then the verdict line. Default mapping: heaviest model +
-high effort + thinking on for design, architecture, concurrency-correctness,
-and audits; mid model + moderate effort + thinking off for locked-plan
-mechanical work (renames, dedup, commits, running tests); lightest model +
-low effort for trivial lookups. The owner switches via `/model`, `/fast`, the
-effort control, and the thinking toggle; this advisory is the only signal
-they get, since the assistant cannot change its own model/effort/thinking.
+Use these EXACT formats — the word "settings" is semantically inclusive of
+all three knobs, whereas "model is" would suggest only the model, so never
+phrase it that way. Always print ALL THREE values on the second line so the
+owner sees the assistant's working assumption every turn:
+
+- If all three already fit the next step:
+  ```
+  Model settings are appropriate @
+  Model=Opus Effort=4 Thinking=off
+  ```
+
+- If one or more should change:
+  ```
+  Model settings change to:
+  Model=Opus Effort=4 Thinking=off
+  ```
+  Then a one-line why for each knob that actually changed (skip the unchanged
+  ones).
+
+State what's next, then the verdict block (two lines). Default mapping:
+heaviest model + high effort + thinking on for design, architecture,
+concurrency-correctness, and audits; mid model + moderate effort + thinking
+off for locked-plan mechanical work (renames, dedup, commits, running
+tests); lightest model + low effort for trivial lookups. The owner switches
+via `/model`, `/fast`, the effort control, and the thinking toggle; this
+advisory is the only signal they get, since the assistant cannot change its
+own model/effort/thinking.
 
 ## Patent-IP Protection — Public-Projects Whitelist
 
