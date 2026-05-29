@@ -135,20 +135,25 @@ formatting, presentation, and semantic completeness only — no decisions.
 - End-of-turn summary: one or two sentences max — what changed and what's
   next.
 
-**Model / thinking / effort advisory — always last in the turn.** Whenever
-the *next* step would benefit from a different model, thinking budget, or
-effort level than the current one, say so — and put it as the **final**
-element of the response (after the end-of-turn summary) so it is never
-missed. The owner cannot self-switch mid-turn and relies on this prompt to
-know when to change `/model`, `/fast`, or thinking depth. State concretely:
-(a) what's next, (b) the recommended model + thinking/effort, (c) one-line
-why. Default mapping: heaviest model + high thinking for design,
-architecture, concurrency-correctness, and audits; mid model + low–medium
-thinking for locked-plan mechanical work (renames, dedup, commits, running
-tests); lightest model for trivial lookups. Only raise the advisory when the
-recommended setting **differs** from what is currently in effect — if the
-current setting already fits the next step, say nothing. The assistant
-cannot change its own model/thinking/effort; this advisory is the mechanism.
+**Model / effort / thinking advisory — always last in the turn.** There are
+THREE independent knobs the owner sets and the assistant cannot self-change:
+**model**, **effort** (1–5), and **thinking** (on/off + depth). At the end of
+every turn, evaluate all three against what the *next* step needs and put the
+verdict as the **final** element of the response (after the end-of-turn
+summary) so it is never missed. Format:
+- If all three already fit the next step, say exactly: **"model settings
+  appropriate."**
+- If one or more should change, **list only the ones that need changing**,
+  each with its recommended value and a one-line why. Do not restate the
+  knobs that are already correct.
+State (a) what's next and (b) the per-knob deltas. Default mapping: heaviest
+model + high effort + thinking on for design, architecture, concurrency-
+correctness, and audits; mid model + moderate effort + thinking off for
+locked-plan mechanical work (renames, dedup, commits, running tests);
+lightest model + low effort for trivial lookups. The owner switches via
+`/model`, `/fast`, the effort control, and the thinking toggle; this advisory
+is the only signal they get, since the assistant cannot change its own
+model/effort/thinking.
 
 ## Patent-IP Protection — Public-Projects Whitelist
 
