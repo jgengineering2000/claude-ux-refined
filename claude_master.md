@@ -71,6 +71,39 @@ reasons, honour that decision; don't re-pose "X vs not-X" as if the
 question is open. Re-litigating settled tradeoffs is friction, not
 thoroughness.
 
+**6. Dependencies: avoid the gratuitous, not the purpose-built.** Minimizing
+dependencies means avoiding crates that duplicate something the standard
+library does cleanly, or that add build/IP surface for marginal convenience.
+It does *not* mean hand-rolling a more error-prone version of something a
+mature, purpose-built crate does correctly. Weigh correctness and risk first:
+if a dependency is the more semantically targeted, lower-risk, better-fit tool
+(e.g. a vetted concurrent-map crate vs a hand-written two-level locking
+discipline with real deadlock surface), the dependency wins. Prefer the
+standard library only when its path is genuinely simple *and* equivalent —
+*equivalent-and-simple* favours std; *more-correct-or-much-safer* favours the
+crate. Minimal-dependency/IP-surface is a tiebreaker among comparable options,
+never a trump over correctness.
+
+**7. Synchronous-deterministic-correct before async/threaded.** Establish a
+correct, deterministic, single-threaded core *first*; introduce concurrency
+(async, threads, pools, locks) only as an additive layer on top of a proven
+sequential implementation. The reason is debuggability: a sequential bug is
+reproducible (same input → same failure) and traceable under a debugger; a
+concurrency bug is a *distribution* of behaviours whose pathological corner
+cases may surface once in thousands of runs and never on demand. Building logic
+and concurrency together means a failure could be either — and the corner cases
+that hold correctness (malformed input, boundary conditions, partial state) are
+precisely the ones that become intermittent and unattributable once buried in a
+worker. Get them right while the path is still deterministic; then the *only*
+new risk concurrency adds is the concurrency itself. Corollaries: prefer a
+concurrency model that preserves sequential reasoning (e.g. per-record locking,
+where you still reason about one unit at a time) over one that requires
+whole-system reasoning; structure threading work so the first sub-steps are
+behaviour-preserving refactors verified green before any thread is spawned; and
+the same logic applies to performance — establish the correct fast sequential
+ceiling, *then* parallelise, because concurrency multiplies a known-good unit
+and cannot rescue a broken one.
+
 ## Collaboration
 
 **Commands vs proposals.** An explicit command ("go", "do it", "implement
@@ -101,6 +134,21 @@ formatting, presentation, and semantic completeness only — no decisions.
   nothing.
 - End-of-turn summary: one or two sentences max — what changed and what's
   next.
+
+**Model / thinking / effort advisory — always last in the turn.** Whenever
+the *next* step would benefit from a different model, thinking budget, or
+effort level than the current one, say so — and put it as the **final**
+element of the response (after the end-of-turn summary) so it is never
+missed. The owner cannot self-switch mid-turn and relies on this prompt to
+know when to change `/model`, `/fast`, or thinking depth. State concretely:
+(a) what's next, (b) the recommended model + thinking/effort, (c) one-line
+why. Default mapping: heaviest model + high thinking for design,
+architecture, concurrency-correctness, and audits; mid model + low–medium
+thinking for locked-plan mechanical work (renames, dedup, commits, running
+tests); lightest model for trivial lookups. Only raise the advisory when the
+recommended setting **differs** from what is currently in effect — if the
+current setting already fits the next step, say nothing. The assistant
+cannot change its own model/thinking/effort; this advisory is the mechanism.
 
 ## Patent-IP Protection — Public-Projects Whitelist
 
