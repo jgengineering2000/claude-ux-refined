@@ -196,6 +196,21 @@ otherwise cleared) before editing the file.
 other project under `~/develop/` not explicitly listed are
 patent-IP-protected.
 
+**External-data sourcing — never check in, never distribute, never promote.**
+For ANY project (whitelisted or not), data sourced from outside that project's
+own tree — the user's personal files, test fixtures pulled from `~/`, snippets
+copied from other repos, output of system tools that reveals local-system
+state — must NEVER be checked in, committed, added to a tarball/archive, or
+included in any artifact that could leave the project tree. This covers the
+data itself AND its derivatives (manifests, indexes, file lists, paths,
+basenames — anything that reflects local-system content or layout). If a test
+or tool needs such data, the data lives only on the local filesystem, the
+tool that materialises it from the local source is committed, and the
+materialised data is gitignored. A "small / it's just metadata / nobody will
+notice" exception is not a thing — the rule is absolute. If the user later
+clarifies a specific carve-out, that carve-out is documented explicitly, not
+inferred.
+
 ## Backup
 
 Patent-IP repos have no automated mirror or remote. Backup is manual via
