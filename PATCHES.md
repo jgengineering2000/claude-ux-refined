@@ -42,8 +42,9 @@ pattern changed; inspect the new `index.css` and update `PATCHES` list.
 
 ### What it does
 
-Claude Code cycles through ~50 synonyms ("Germinating", "Spelunking", "Wibbling", …)
-while processing. The patch replaces the entire array with a single configurable word.
+Claude Code cycles through a large set of synonyms ("Germinating", "Spelunking",
+"Wibbling", …) while processing — 84 words as of extension 2.1.158. The patch replaces
+the entire array with a single configurable word.
 
 ### Anchor pattern
 
@@ -122,3 +123,26 @@ When an update breaks a patch:
 3. Update the pattern constants in the patch script (`PATCHES` list for A1,
    `ANCHOR`/`OLD` constants for A2/A3).
 4. Re-run the patch.
+
+---
+
+## Auto-reapply after extension updates
+
+A Claude Code extension update installs a **new versioned directory** (e.g.
+`anthropic.claude-code-2.1.162-linux-x64`) alongside the old one and switches to it.
+The new webview is pristine, so the patches silently revert — the source patches are
+never lost (they live here in AUR), but their *applied* state is gone until re-run.
+
+`systemd/` wires this up automatically:
+
+- **`claude-ux-reapply.path`** — a user path unit watching `~/.antigravity/extensions/`.
+- **`claude-ux-reapply.service`** — a oneshot that runs `patches/apply-all.py --no-browser`
+  when the watcher fires.
+- **`install-autoreapply.py`** — renders the service with this AUR checkout's absolute
+  path, installs both units into `~/.config/systemd/user/`, and enables the watcher.
+  Run once: `python3 systemd/install-autoreapply.py` (`--uninstall` to remove).
+
+Known limitation: the watcher re-patches the **files**, but a running webview won't
+reflect it until the extension host reloads. After an update + reload the margins may
+briefly return; by then the service has re-patched on disk, so one more reload settles
+it. File-patching an extension can't be made atomic with the host reload.

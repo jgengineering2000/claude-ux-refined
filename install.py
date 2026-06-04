@@ -238,7 +238,7 @@ def main():
     do_b = sel in ("b", "ab")
 
     # ── Part A: configure ─────────────────────────────────────────────────────
-    do_a1 = do_a2 = do_a3 = False
+    do_a1 = do_a2 = do_a3 = do_a4 = False
     vocab_word = "Working"
     sb_needs_sudo = False
 
@@ -249,6 +249,7 @@ def main():
         do_a1 = ask_yn("A1  Chat panel layout  (reduced margins, overlay scrollbar)", default="y")
         do_a2 = ask_yn("A2  Processing vocabulary  (replace cycling word list)", default="y")
         do_a3 = ask_yn("A3  Simple Browser tab title fix", default="y")
+        do_a4 = ask_yn("A4  Auto-reapply patches after extension updates  (systemd watcher)", default="y")
 
         if do_a2:
             print()
@@ -309,7 +310,8 @@ def main():
         if do_a1: print("    A1  Chat panel layout")
         if do_a2: print(f"    A2  Vocabulary → \"{vocab_word}\"")
         if do_a3: print(f"    A3  Simple Browser title {'(sudo)' if sb_needs_sudo else ''}")
-        if not any([do_a1, do_a2, do_a3]):
+        if do_a4: print("    A4  Auto-reapply watcher (systemd --user)")
+        if not any([do_a1, do_a2, do_a3, do_a4]):
             print("    (nothing selected)")
     if do_b:
         print("  Part B — Review infra:")
@@ -333,6 +335,9 @@ def main():
             run_patch("claude-ui-vocabulary.py", vocab_word)
         if do_a3:
             run_patch("simplebrowser-title.py", use_sudo=sb_needs_sudo)
+        if do_a4:
+            print("\n  A4  Installing auto-reapply watcher...")
+            subprocess.run([sys.executable, str(HERE / "systemd" / "install-autoreapply.py")])
 
     if do_b:
         section("Installing Review Infrastructure")
@@ -347,7 +352,7 @@ def main():
     # ── Done ──────────────────────────────────────────────────────────────────
     section("Done")
     print()
-    if do_a and any([do_a1, do_a2, do_a3]):
+    if do_a and any([do_a1, do_a2, do_a3, do_a4]):
         print("  Restart extension host to activate IDE patches:")
         print("    Ctrl+Shift+P → Developer: Restart Extension Host")
         print()

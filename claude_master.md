@@ -176,10 +176,10 @@ State what's next, then the verdict block (two lines). Default mapping:
 level 5–6 + heaviest model + thinking on for design, architecture,
 concurrency-correctness, audits, and demanding multi-step coding; level 2–3
 + mid model + thinking off for locked-plan mechanical work (renames, dedup,
-commits, running tests); level 1 + lightest model for trivial lookups. The owner switches
-via `/model`, `/fast`, the effort control, and the thinking toggle; this
-advisory is the only signal they get, since the assistant cannot change its
-own model/effort/thinking.
+commits, running tests); level 1 + lightest model for trivial lookups. The
+owner switches via `/model`, `/fast`, the effort control, and the thinking
+toggle; this advisory is the only signal they get, since the assistant
+cannot change its own model/effort/thinking.
 
 ## Patent-IP Protection — Public-Projects Whitelist
 

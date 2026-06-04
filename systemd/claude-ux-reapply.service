@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Jonathan George
+#
+# Oneshot: re-apply the Claude Code UX patches (chat margins + static
+# "Working" indicator) to whatever extension version is currently installed.
+#
+# Triggered by claude-ux-reapply.path when ~/.antigravity/extensions/ changes
+# (i.e. after a Claude Code extension update installs a fresh, unpatched
+# webview). The patch scripts are idempotent, so re-running on unrelated
+# extension changes is harmless.
+#
+# __AUR_DIR__ is substituted with the absolute AUR path at install time by
+# install-autoreapply.py (the AUR checkout location is not fixed).
+
+[Unit]
+Description=Re-apply Claude Code UX patches after an extension update
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 __AUR_DIR__/patches/apply-all.py --no-browser
