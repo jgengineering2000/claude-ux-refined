@@ -104,6 +104,35 @@ the same logic applies to performance — establish the correct fast sequential
 ceiling, *then* parallelise, because concurrency multiplies a known-good unit
 and cannot rescue a broken one.
 
+**8. Own the resource lifecycle at the owner, self-healing across every entry
+context.** A component that owns a shared, singleton system resource — a mount, a
+listening socket, a lock file, a PID/port, a device — owns its full lifecycle
+*itself*, not via external orchestration (systemd `ExecStartPre`/`ExecStopPost`,
+wrapper scripts, test harnesses). On startup it must repair what a prior instance
+left behind: a clean state → acquire; a dead orphan (crashed owner) → reap and
+self-heal; a *live* peer already holding it → stop with a clear message, never
+fight. On shutdown it must release cleanly on **every** signal/exit path
+(SIGTERM/SIGINT/SIGHUP/normal), with the handler installed *first*, so cleanup
+fires regardless of launch context or how far startup got. Startup-repair and
+shutdown-release are synergistic — each guarantees the other's precondition — so
+the invariant ("one owner, clean state") holds for *whoever* runs the component:
+free-run, service-managed, test, or production, identically. The orchestrator
+just launches the binary; it does not manage the resource. Corollary: when a test
+needs the resource, it relies on the owner's self-protection (and frees the
+resource the same way a redeploy would) rather than reimplementing reap/guard
+logic — fix robustness in the owner, not the caller.
+
+**9. Verify against the real artifact, and the contract is not one client.** Test
+and prove behaviour against the *actual* deployment / canonical resource, not a
+convenient fiction (a throwaway temp mount no real consumer reads, a mock that
+diverges from production, a happy-path stand-in). If a system exposes a standard
+interface (a filesystem, an HTTP API, a CLI), that interface — exercised by the
+standard tools — *is* the contract; the primary GUI/SDK client is one consumer
+among many, and a behaviour that works for it but breaks a standard-tool consumer
+(or vice-versa) is a defect, not an acceptable specialization. And never
+*fabricate* a constraint to avoid an action ("I can't touch this, it's a runtime
+gate") — verify the real state, identify the right layer, and fix it there.
+
 ## Collaboration
 
 **Commands vs proposals.** An explicit command ("go", "do it", "implement
