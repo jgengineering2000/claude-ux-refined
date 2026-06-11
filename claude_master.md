@@ -178,6 +178,35 @@ omits its context is a riddle. Two requirements, both mandatory:
   every layer (daemon, CLI, UI, shell, service unit), not only where a logger already
   exists.
 
+**11. Every non-trivial task carries a proof-of-progress; silence is not success.**
+The moment you start anything that runs longer than a glance — a build, a long
+command, a hook, a migration, a generation loop, a remote job — you must *also* have
+a concrete mechanism that tells you it is **advancing**, not stalled, looping, or
+silently failing. "It's probably still working" is not an observation; it is the
+absence of one, and absence-of-output looks identical to a hang. The discipline:
+
+  1. **Decide the liveness signal before (or as) you launch**, not after it worries
+     you. Cheapest first: check the result/exit code, tail the log, add a `-v`/verbose
+     or progress flag, print a per-iteration counter. If the tool gives you nothing,
+     that lack is itself the defect to fix (a long job with no progress output is
+     under-instrumented) — but in the meantime you still owe yourself a probe.
+  2. **Escalate to the trace when output is missing or ambiguous.** If a thing makes
+     no observable progress within ~10 seconds, treat it as *suspected hung* and look —
+     `ps`/`wchan` to see if it's blocked vs. burning CPU, then `strace -f` (or read
+     its open fds) to see the actual syscall it is stuck in or repeating. Do **not**
+     wait it out, and do **not** poll it with another blocking loop (which can itself
+     stall the same way). A blocked process at 0% CPU and a busy one repeating the same
+     call are different diagnoses with different fixes — the trace distinguishes them in
+     seconds. (This is the same artifact-not-assertion stance as P9: the trace tells you
+     what is happening; "it should be progressing" does not.)
+  3. **The reflex is general; the scheduled syscall-audit is one instance of it.**
+     PROCESS.md's differential syscall-tracing pass is a deliberate, after-the-fact
+     audit over a defined roster — it catches per-item O(files) calls, never-returned
+     calls, and latency outliers *when you point it at them*. This principle is the
+     live, always-on counterpart: the habit that makes you point a trace at the stuck
+     thing *right now*, mid-task, before it has wasted minutes. Build the proof in;
+     don't discover its absence by staring at a frozen terminal.
+
 ## Collaboration
 
 **Commands vs proposals.** An explicit command ("go", "do it", "implement
