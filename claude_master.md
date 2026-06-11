@@ -5,6 +5,13 @@ These rules apply to every project that inherits from AUR. Project-level
 this content. Distribution model: `~/.claude/CLAUDE.md` is a symlink to this
 file so Claude Code auto-loads it on every session regardless of cwd.
 
+This file holds the engineering **principles** (what correct looks like). The
+companion **methodology** (how we audit, verify, and build — fan-out audits,
+syscall-trace passes, fail-first tests, crystallising once-solved analysis into
+tooling) lives in `PROCESS.md`, imported here so it inherits identically:
+
+@~/develop/aur/PROCESS.md
+
 ## Engineering Principles
 
 **1. No fixups without exhausting the clean path.** Workarounds signal that
@@ -132,6 +139,44 @@ among many, and a behaviour that works for it but breaks a standard-tool consume
 (or vice-versa) is a defect, not an acceptable specialization. And never
 *fabricate* a constraint to avoid an action ("I can't touch this, it's a runtime
 gate") — verify the real state, identify the right layer, and fix it there.
+
+  **Performance corollary — the syscall trace is the artifact, not the code or
+  the comment.** A complexity claim ("O(1) per call", "one extra getxattr per
+  file", "never re-opens") is *not* evidence; the trace is. Code review and
+  doc-comments routinely miss a per-item syscall that a `strace -f` surfaces
+  instantly — a function can *look* O(1) while doing an extra `stat` of a shared
+  IPC/config file on every item. So treat differential syscall-tracing as a
+  *correctness* check, not merely a perf tool: **a syscall that scales with the
+  work-item count (files, rows, requests) when it could be O(1) or O(batches),
+  and any incomplete (never-returned) or long-latency call, is a defect signal**
+  — verified against the trace of the real, deployed process, not asserted from
+  the source. (How to operationalise this — capture flags, per-process roster,
+  the once-solved-analysis-into-a-script rule — is methodology, in `PROCESS.md`.)
+
+**10. Error handling always logs, and every message carries the context that
+makes the failure self-explanatory.** Error handling and logging are not separate
+concerns: an error path that does not log is a silent failure, and a log line that
+omits its context is a riddle. Two requirements, both mandatory:
+
+  1. **Capability — leveled output.** Logging must distinguish at least
+     `ERROR` / `WARNING` / `STATUS`, gated by a verbosity control. Severity is not
+     decoration: it is how an operator filters signal from noise. An unconditional
+     debug `eprintln` on a hot path and a swallowed error are the *same* defect from
+     opposite ends — one logs without a level, the other has a level (error) and
+     doesn't log. Neither is acceptable.
+  2. **Content — full context, every message.** Every log/error message must include
+     *all* the relevant data that makes it instantly obvious *what* failed and *in
+     which state*: the identifier (inode, key, path, request id), the data or
+     parameter values, the iteration/index, and the status/phase. The reader should
+     never have to reproduce the failure to learn what it was about — the message
+     *is* the diagnosis. "Failed to decode" is a non-message; "decode failed for
+     md5=… tier=2 size=… (iteration 3/8): <cause>" is a message.
+
+  The test: read the log line alone, with no access to the running system. If it does
+  not tell you what happened, to what, in what state, and why, the message is
+  incomplete — fix the message, not just the bug. This applies in every language and
+  every layer (daemon, CLI, UI, shell, service unit), not only where a logger already
+  exists.
 
 ## Collaboration
 
