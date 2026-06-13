@@ -1,16 +1,14 @@
 # Process & Methodology — AUR Master
 
-These are **methodology** rules — *how* we audit, verify, and build, as distinct
-from the universal engineering *principles* in `claude_master.md` (which say *what*
-correct looks like). This file is inherited by every downstream project the same way
-the principles are; project `PROCESS.md` (if any) adds project-specific workflow on
-top and must not duplicate this content.
-
-The line between the two files: a *principle* is a property the finished system must
-have (correctness-first, preserve units of truth, own the lifecycle). A *process* is
-a repeatable procedure for getting there or proving you did (how to run an audit, how
-to verify a fix, when to crystallise analysis into a tool). When in doubt: if it
-describes the artifact, it's a principle; if it describes our actions, it's process.
+These are **methodology** rules — *how* we audit, verify, and build, as distinct from
+the engineering *principles* in `claude_master.md` (*what* correct looks like).
+Inherited by every downstream project the same way the principles are; a project
+`PROCESS.md` adds project-specific workflow on top and must not duplicate this content.
+The line between the two: a *principle* is a property the finished system must have
+(correctness-first, preserve units of truth, own the lifecycle); a *process* is a
+repeatable procedure for getting there or proving you did (run an audit, verify a fix,
+crystallise analysis into a tool). When in doubt: describes the artifact → principle;
+describes our actions → process.
 
 ---
 

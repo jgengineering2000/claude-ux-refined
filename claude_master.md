@@ -5,10 +5,9 @@ These rules apply to every project that inherits from AUR. Project-level
 this content. Distribution model: `~/.claude/CLAUDE.md` is a symlink to this
 file so Claude Code auto-loads it on every session regardless of cwd.
 
-This file holds the engineering **principles** (what correct looks like). The
-companion **methodology** (how we audit, verify, and build — fan-out audits,
-syscall-trace passes, fail-first tests, crystallising once-solved analysis into
-tooling) lives in `PROCESS.md`, imported here so it inherits identically:
+This file holds the engineering **principles** (what correct looks like); the
+companion **methodology** (how we audit, verify, and build) lives in
+`PROCESS.md`, imported here so it inherits identically:
 
 @~/develop/aur/PROCESS.md
 
