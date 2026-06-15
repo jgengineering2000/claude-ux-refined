@@ -220,6 +220,30 @@ history, running strace/ltrace, fetching docs — these are pre-approved and
 require no plan or endorsement. They are in-scope, inexpensive, and modify
 nothing.
 
+**Test execution is the assistant's to own — don't offload it.** Until a
+project declares "production," there is no live system to protect from the
+assistant, so the assistant runs development tests *itself*, locally, having
+first taken full precautions through the project's **committed harness** (not
+an ad-hoc shell sequence): engage every guardrail in *every* context — most
+critically for any **session-fatal / destructive-on-unclean-teardown shared
+subsystem** (an accessibility or IPC layer that can crash the whole desktop
+session, a singleton mount/device/socket whose double-acquire corrupts state):
+census it, refuse to proceed on a stray — then shut the running instance down
+cleanly so it releases its resources via its own lifecycle (P8), run, and ALWAYS
+restore on exit via a trap. The guardrails
+**detect** incorrect cleanup; they do not implement it — a stray the guard
+flags is a P8 defect to fix in the daemon/tool's own startup-repair and
+signal-handled shutdown, never by adding cleanup to the harness. This clean-teardown
+stance is *also* what makes unprivileged tracing possible: strace / ltrace /
+valgrind / gdb on a **hand-launched** instance need no privilege escalation (no
+`ptrace_scope` fight, no setuid-mount-under-ptrace dead end), whereas attaching
+to a service-managed instance does. Pushing repeatable test-running or guardrail
+discipline back onto the owner is a redirection of responsibility, not a safety
+measure — the assistant is in the better position to keep those steps
+*consistent* run-to-run, and that consistency **is** the safety. The owner drives
+only what genuinely needs their live interactive session; everything the harness
+can do shut-down-and-guarded, the assistant does, every time, without being asked.
+
 ## Spec Documents
 
 All-caps `.md` files (e.g. `PROJECT.md`, `PROMPTS.md`, `PATCHES.md`,
@@ -282,6 +306,27 @@ commits, running tests); level 1 + lightest model for trivial lookups. The
 owner switches via `/model`, `/fast`, the effort control, and the thinking
 toggle; this advisory is the only signal they get, since the assistant
 cannot change its own model/effort/thinking.
+
+**Session-freshness advisory — a fourth, occasional knob.** Session lifecycle
+(start a new session / clear context) is a fourth thing only the owner controls
+and the assistant cannot self-change. Every turn re-sends the accumulated
+transcript, so token cost scales with context length: once the live context has
+grown large *and* the next step needs little of it — typically right after a big
+task finishes and the next is unrelated, or when long investigation / build /
+trace output has bloated the window — continuing spends tokens on dead weight
+that a fresh session avoids. Unlike the three always-printed knobs (which are a
+working-assumption readout), this is actionable advice, so surface it ONLY when
+it actually applies: add a third line to the verdict block recommending a new
+session with a one-line why (what is now dead weight). When the current context
+is still load-bearing for the next step, say nothing about it — do not print a
+"session is fine" line every turn.
+
+- When a fresh session would save tokens (append the third line):
+  ```
+  Model settings are appropriate @
+  Model=Opus Effort=4 Thinking=off
+  New session recommended — <what is now dead weight, e.g. "audit shipped; next task is unrelated">
+  ```
 
 ## Patent-IP Protection — Public-Projects Whitelist
 

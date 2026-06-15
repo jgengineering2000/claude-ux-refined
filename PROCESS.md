@@ -40,6 +40,18 @@ Thereafter: call the script, spend your reasoning on the *findings*, and refine 
 script when it misses. The tool lives at the project level (it encodes project-shaped
 patterns); the *practice* of building it is this process rule.
 
+**Corollary — never hand-mine machine output with the reasoning model.** Reading a log
+or trace and reasoning out "what repeats (including *multi-line* repetition), what's
+anomalous, which calls are incomplete, where a pattern starts and ends, the surrounding
+context and buffer contents, and the counts" is *deterministic analysis* — it belongs in
+a script the model **calls**, not in the model's tokens. Mining it by hand with a
+heavyweight model is slow, burns the owner's session budget, and drifts between runs. So
+build the analyzer — multi-line / single-line repetition, anomaly + pattern-start/-end
+detection, incomplete-call pairing, indexed capture of each hit's context **and** buffer
+contents, and summary statistics with stable indexed references — run it, and spend the
+model's reasoning *only* on reviewing its output. The moment you catch yourself eyeballing
+a log in chat, that is the signal to write the tool instead of reading another page.
+
 ## 2. Comprehensive audits fan out per subsystem and read end-to-end
 
 A real audit is **not** a pattern-driven sample taken to prove a point. When the task is
@@ -93,3 +105,34 @@ exist *precisely because the code path had no coverage*, so the missing test is 
 the defect, not an extra. (This is the procedural companion to the `claude_master.md`
 unit-test-coverage *principle*: the principle says what must be covered; this says you
 prove the fix by reversing red→green, not green-from-the-start.)
+
+## 5. Dev tests run through a committed teardown-and-guard harness, assistant-driven
+
+Until a project declares "production," the standard way to exercise the **real deployed
+artifact** is a *committed* harness the assistant runs itself — not the owner, not an
+ad-hoc shell sequence — structured as five fixed stages:
+
+1. **Guard every shared/fragile resource first** — census the singleton mount / socket /
+   lock / PID and, above all, any **session-fatal / destructive-on-unclean-teardown shared
+   subsystem** (e.g. an accessibility or IPC layer whose mishandling crashes the whole
+   desktop session) — to **detect** incorrect state, *refusing to proceed* on a stray. The
+   guardrail **detects; it never implements cleanup.** A stray, an orphan, or
+   a won't-stay-singleton in the guard's report is a **defect in the component's own
+   lifecycle** — fix it in the *daemon/tool itself* (startup-repair + clean
+   shutdown-release on **every** signal/exit path, handlers installed first; P8), never
+   by adding reap/guard logic to the harness or by sweeping it by hand. The guard is a
+   forcing function for self-healing, not a substitute for it.
+2. **Shut the running instance down cleanly** so it releases its resources via its own
+   lifecycle (`claude_master.md` P8), not by ripping them out.
+3. **Hand-launch the installed binary** on the SAME canonical resource, under the chosen
+   tool (strace/ltrace/valgrind/gdb — *unprivileged*, precisely because it is
+   hand-launched), driven by the STANDARD client tools that are the real contract (P9).
+4. **A trap that ALWAYS restores** the running instance, so a failed or interrupted run
+   never strands the resource.
+5. **Mine the output with the crystallised script** (§1 / §3), then reason over findings.
+
+The harness *is* the method; "I'll just run a few commands by hand" is exactly how a
+guardrail gets skipped and a run strands a resource. Build it once, run it every time,
+sharpen it when it misses. (This is the companion to the `claude_master.md` collaboration
+rule that test execution is the assistant's to own. MTI instances: `tests/dev_instrument.sh`,
+`tests/atspi_guard.sh`, `tests/syscall_audit.py`.)
