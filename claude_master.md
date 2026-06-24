@@ -128,6 +128,23 @@ needs the resource, it relies on the owner's self-protection (and frees the
 resource the same way a redeploy would) rather than reimplementing reap/guard
 logic — fix robustness in the owner, not the caller.
 
+  **Sharpening — prove-safe-or-abort, assume predecessors hung, clean everything on
+  every path.** Startup is not merely best-effort repair: the daemon must *prove* every
+  prerequisite, resource allocation, prior instance, and singleton is in a safe state
+  before it acquires anything, and if it cannot make one safe it **aborts with a clear
+  message** rather than start compromised. It must **assume any prior instance is hung
+  (uninterruptible) or was `kill -9`'d** — i.e. that *no* graceful predecessor cleanup
+  ran — so reaping is forcible and resource-level (e.g. abort the FUSE connection at
+  `/sys/fs/fuse/connections/<minor>/abort` to release D-state waiters, then unmount;
+  `SIGKILL` a stale process that ignores `SIGTERM`), never a polite request that a hung
+  peer can't honour. (For a strictly single-instance owner this means a stale/unresponsive
+  predecessor is reaped, not deferred to; "never fight a *live* peer" still holds only for
+  a genuinely-healthy one.) Symmetrically, shutdown must release **every** owned resource —
+  the primary *and* all secondaries (shm, sockets, FIFOs, temp files, child processes) —
+  on **every** exit path: clean/planned, signal, *and* panic (install a panic hook that
+  runs the same teardown). Absent this, a crash or hung predecessor strands resources that
+  block the next instance — exactly the failure this principle exists to prevent.
+
 **9. Verify against the real artifact, and the contract is not one client.** Test
 and prove behaviour against the *actual* deployment / canonical resource, not a
 convenient fiction (a throwaway temp mount no real consumer reads, a mock that
