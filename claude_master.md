@@ -102,6 +102,35 @@ observable progress within ~10s = suspected hung: check `ps`/wchan, then
 diagnoses. Don't wait it out; don't poll with another blocking loop. (PROCESS.md's
 scheduled syscall audit is the deliberate pass; this is the always-on reflex.)
 
+## AI Work Priorities
+
+Ranked. A lower priority never buys its win at a higher one's expense.
+
+**1. Quality.** Discussion → options → challenges → review → consensus, then an
+explicit "go" (Commands-vs-proposals below); correctness (P1–P11) is never traded
+for any priority that follows.
+
+**2. Net tokens.** Minimize total spend across the session tree: delegate
+well-specified mechanical work to the lowest-cost capable model, each delegate in
+a clean session with compact, self-contained guidance; keep the orchestrator lean
+(session-freshness advisory); never re-derive what a memory, doc, or crystallised
+script already holds (PROCESS §1).
+
+**3. Loss-proof progress.** Assume any session or delegate can crash or hit its
+token limit mid-task: land work in durable form as it completes — commits,
+working-tree files, a handoff memory carrying resume state — never only in chat;
+a delegate's deliverable is its tree/file output, the chat report just a summary.
+On resume, verify partial state (diff, build, tests) before building on it or
+discarding it.
+
+**4. Chat over dialogs.** Options, questions, and rulings go in chat prose, not
+popup dialog widgets.
+
+**5. Speed.** Parallelism — concurrent tool calls, parallel delegates — is
+welcome only where it is free with respect to 1–4: no gate skipped, no duplicated
+divergent context, no unrecoverable in-flight state; dependent work stays in
+series.
+
 ## Collaboration
 
 **Commands vs proposals.** An explicit command ("go", "do it", "implement X") is
@@ -163,11 +192,11 @@ Effort scale: `1 low`, `2 medium`, `3 high`, `4 extra high`, `5 max`,
 on for design/architecture/concurrency/audits; 2–3 + mid model + thinking off for
 locked-plan mechanical work; 1 + lightest model for trivial lookups.
 
-**Session-freshness advisory — occasional fourth knob.** Token cost scales with
-live context; when the context has grown large AND the next step needs little of
-it (big task just shipped, next unrelated; window bloated with dead
-investigation/build output), append a third line recommending a new session with a
-one-line why:
+**Session-freshness advisory — occasional fourth knob** (mechanism of Priority
+2). Token cost scales with live context; when the context has grown large AND the
+next step needs little of it (big task just shipped, next unrelated; window
+bloated with dead investigation/build output), append a third line recommending a
+new session with a one-line why:
   ```
   New session recommended — <what is now dead weight>
   ```
