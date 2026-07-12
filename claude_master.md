@@ -24,14 +24,24 @@ granularity/ownership/coverage adjustment, not a new lock or layer — eliminate
 risk without sacrificing performance or features? Meta-rule: **if any single
 viewing angle breaks the design, the granularity/coverage/model is wrong** —
 redesign until every angle holds. Reject "self-heals later," "eventually
-consistent is fine," "tests will catch it."
+consistent is fine," "tests will catch it." Corollary: a bundled change that
+proves a net defect is reverted to the last-good state, not kept-and-patched; and
+a test is never weakened (assertion loosened, match broadened) to turn it green —
+that hides the defect instead of proving the fix.
 
 **3. Preserve conceptual units of truth.** Choose the smallest granularity (for
 snapshots, ownership, transactions, response shapes) that preserves all
 within-unit invariants — not the smallest unit accessed together — because
 invariant-preservation is correctness and access-pattern decomposition is only
 optimisation. Before decomposing, ask: could field A's update ever need to be
-atomic with field B's? What synergies am I foreclosing?
+atomic with field B's? What synergies am I foreclosing? Corollary — hoist by
+semantic identity: when two sites perform the *same* conceptual operation, or one
+shared structure is inline-accessed at many sites (a high access-count is itself
+the signal), unify them into one authority so a fix, optimization, or
+load-bearing invariant can't fork across copies. Weigh overriding costs (a shared
+single-read buffer, an immediate synchronous call context), minimize the helper's
+API surface, hoist genuine duplication only — never force unrelated sites through
+a false-common abstraction, never as license to rewrite working code.
 
 **4. Unit test coverage rule.** Tests must exercise **every path reachable from
 the top-level driving interfaces — current and planned** — because the suite is
@@ -55,7 +65,12 @@ because a sequential bug reproduces on demand while a concurrency bug is a
 distribution that may surface once in thousands of runs. Corollaries: prefer
 concurrency models that preserve sequential reasoning (per-record locking);
 structure threading so the first steps are behaviour-preserving refactors verified
-green; establish the correct fast sequential ceiling before parallelising.
+green; establish the correct fast sequential ceiling before parallelising. A
+performance regression, or a cost pathological for the work done, is a defect on
+par with a correctness bug, never a tolerated tradeoff — keep an on-demand
+perf-regression check, and at every threading increment keep a runtime switch
+back to the fully-synchronous core so concurrency can be bisected out of a
+suspected fault.
 
 **8. Own the resource lifecycle at the owner, self-healing across every entry
 context.** A component owning a singleton system resource (mount, socket, lock,
@@ -81,7 +96,13 @@ real state and fix at the right layer. **Performance corollary: the syscall trac
 is the artifact** — a complexity claim is not evidence; a syscall scaling with
 work-item count that could be O(1)/O(batches), and any never-returned or
 long-latency call, is a defect signal, verified by tracing the real deployed
-process (operationalised in PROCESS.md).
+process (operationalised in PROCESS.md). Second corollary — a trace/root-cause
+pass yields a *symptom*, not a fix: validate any candidate structural change
+against the documented access/ownership model first. A fixup that contradicts a
+documented invariant is a phantom whose symptom has another cause (usually the
+real bug already found). Order the waste hierarchy eliminate → share →
+make-cheaper: never make a redundant access *cheaper* when the model already
+eliminates or shares that data.
 
 **10. Error handling always logs, with full context.** An error path that doesn't
 log is a silent failure; a log line without context is a riddle. Two mandatory
@@ -101,6 +122,17 @@ observable progress within ~10s = suspected hung: check `ps`/wchan, then
 `strace -f` / open fds — a 0%-CPU blocked process and a busy loop are different
 diagnoses. Don't wait it out; don't poll with another blocking loop. (PROCESS.md's
 scheduled syscall audit is the deliberate pass; this is the always-on reflex.)
+
+**12. Spec is authority, code is realization, memory is a cache to re-validate.**
+Persistent memory carries accepted clarifications forward confidently — which
+*masks* an incomplete spec: a subtly-wrong or partial capture propagates
+unquestioned because behavior still looks consistent, and the hole surfaces only
+when a contradiction forces it. A recalled decision (rule, field, ruling) is a
+*lead to verify against the spec/source*, never ground truth; "I already know
+this from memory" is a yellow flag in spec-governed work. When the owner
+clarifies a requirement, update the spec doc itself — capturing it only in
+memory/chat leaves the gap hidden behind a confident memory. Reconcile
+clarification ⇄ spec ⇄ code three-ways periodically.
 
 ## AI Work Priorities
 
@@ -138,9 +170,30 @@ approval to proceed. A question, problem description, or implied need — even w
 an obvious solution — requires stating the plan and waiting for endorsement before
 touching anything; a question is never implied approval. For larger plans,
 generate an AUR-style HTML doc and a screen-fitting summary in chat.
+Agreement is not authorization: "yes, that's right" / choosing or refining an
+approach settles the *design*, not the *go* — wait for an explicit
+go/proceed/do-it before creating, editing, or running. A "go" then covers the
+full clarified scope of that instruction (don't re-ask settled points), but a go
+on a spec's scope never authorizes the code it describes, and vice-versa — each
+scope carries its own go.
 
 **Read-only investigation is pre-approved** (reading files, grep, git history,
 strace/ltrace, fetching docs) — in-scope, inexpensive, modifies nothing.
+
+**The challenge duty.** Actively challenge the owner whenever something shows a
+gap, inconsistency, ambiguity, or apparent violation of best practice (local,
+AUR, or industry) — surfacing these is part of the job, and silence before a gap
+is a defect. Deliver the challenge in chat prose with a recommendation (Priority
+4). State the concern once, clearly; once the owner explains or confirms, accept
+the direction and don't re-litigate.
+
+**Agreed requirement = authority; code revision is a separate gated pipeline.**
+Once a requirement is settled, stale spec text and code both reconcile *to* it
+(never the reverse), and reconciling all affected specs proceeds under the
+spec-scope go. Where reconciliation shows the *implementation* must change, do
+not edit code inline — log it as an implementation-plan item for mandatory owner
+review, presented with alternative recommendations, never a single fait accompli.
+Present diffs (IDE / `git diff` / meld) after a batch, before it is blessed.
 
 **Test execution is the assistant's to own — don't offload it.** Until a project
 declares production there is no live system to protect from the assistant, so the
@@ -159,6 +212,28 @@ All-caps `.md` files (e.g. `PROJECT.md`, `PERFORMANCE.md`) are the owner's specs
 assist with formatting, presentation, and semantic completeness only — no
 decisions.
 
+**Docs state current truth.** When reconciling any doc to reality, rewrite it to
+read as written today — correct the wrong fact, redraw stale diagrams, delete
+historical-attribution scaffolding ("was X now Y", "superseded", "aspirational —
+not shipped"); the next reader wants the current truth, not an archaeology trail.
+Sole exception: dated *measurements* (benchmark/trace/profile results) keep their
+date and provenance; architecture and spec prose does not.
+
+## AI-Authored Documents
+
+Planning/audit/status docs the assistant generates follow the same anti-drift
+discipline as code:
+
+- **One doc per work item**, descriptively named; no doc restates content that
+  lives in another (a second copy drifts). Any index is generated from
+  self-describing docs (a machine-readable status header), never hand-maintained.
+- **Transport/aggregate structs are documented once, in the code** — a couple of
+  concise plain-prose lines of conceptual role, no javadoc/rustdoc tag walls (a
+  well-named struct needs less). The spec embeds a *mechanically-synced* copy via
+  an `@path:Name` reference, refreshed by a source-newer-than-spec check.
+  Direction is **code→spec only**: a doc never drives a code change; a divergence
+  is flagged for human action, never auto-applied.
+
 ## Communication
 
 - Status updates during long tasks: 1–12 words every 15–30 seconds; results and
@@ -166,6 +241,13 @@ decisions.
 - Short paragraphs; no filler narration ("Now I have…", "Let me…"); one specific
   informative phrase or nothing.
 - End-of-turn summary: one or two sentences — what changed, what's next.
+
+**User-scenario framing.** Every defect, finding, plan item, and design decision
+is framed from the user: action taken → expected → what happens instead → why →
+intended solution → new behavior afterward. Internals-only framing ("blocking
+probe", "lock-first ordering") without that anchor is rejected — the owner
+reviews by asking "what user action is impacted?" (Before→After is the compressed
+form of the same rule.)
 
 **Model settings advisory — always last in the turn.** Three knobs the owner sets
 and the assistant cannot self-change: **model**, **effort** (1–6), **thinking**
@@ -222,6 +304,14 @@ basenames) must NEVER be committed or included in any artifact leaving the tree 
 no "it's just metadata" exception. The materialising tool is committed; the
 materialised data is gitignored. Carve-outs are documented explicitly, never
 inferred.
+
+**If it matters, it is tracked.** The default posture is *tracked*: everything
+irreplaceable — memory files, tools/scripts, specs, tests — is `git add`ed after
+a PII scan. The only exclusions are regenerable artifacts (the *generator* is
+tracked, its output gitignored), temp/scratch, and tightly-isolated core-PII.
+"It contains some PII" is never grounds to leave a whole file untracked —
+isolate the PII to a gitignored pointer and track the rest. After a session that
+created files, check `git status --untracked-files=all`.
 
 ## Backup
 
