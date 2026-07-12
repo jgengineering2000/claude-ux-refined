@@ -72,7 +72,15 @@ When the owner states a general principle ("X should always…", a capability or
 content rule), file it at the level its scope implies — universal →
 `claude_master.md`; repeatable procedure → PROCESS; project fact → project
 memory/spec — and do NOT demote it to a local task because it surfaced while
-discussing one bug. Reiterating a principle correctly in chat is NOT capturing
+discussing one bug. A **task-shaped recipe** — guidance consulted only when a
+specific task shape occurs (logging setup, an audit pass, a hazardous subsystem)
+— files as a **skill** (AUR `skills/` symlinked global, or project skill if it
+names project machinery), never as always-loaded text: the test is "would this
+change behavior in a session that never touches its topic?" — if no,
+always-loading it is Priority-2 waste. The skill's trigger lives in its
+description; where a missed trigger is costly, an always-loaded principle keeps
+a one-line "invoke the X skill before Y" anchor (P10→logging-discipline and
+MTI's atspi-safety are the pattern). Reiterating a principle correctly in chat is NOT capturing
 it; the in-chat echo is exactly what masks the filing error. When unsure whether
 something was dropped, re-read the transcript from the request forward — recall
 is the thing that fails here.

@@ -2,8 +2,9 @@
 
 Applies to every project inheriting from AUR; project `CLAUDE.md` files add
 specifics and must not duplicate this. Distribution: `~/.claude/CLAUDE.md`,
-`~/.claude/git-ip-guard.sh`, and `~/.claude/skills/audit-methodology` are
-symlinks to this repo (`claude_master.md`, `hooks/`, `skills/`). Principles (what
+`~/.claude/git-ip-guard.sh`, and the AUR skills under `~/.claude/skills/`
+(audit-methodology, logging-discipline) are symlinks to this repo
+(`claude_master.md`, `hooks/`, `skills/`). Principles (what
 correct looks like) live here; methodology (how we audit/verify/build) is
 imported:
 
@@ -112,7 +113,11 @@ opposite ends; (2) every message carries the identifier, values,
 iteration/index, and phase that make it self-explanatory — "decode failed for
 md5=… tier=2 size=… (iteration 3/8): <cause>", never "failed to decode". Test:
 the log line alone, without the running system, must say what happened, to what,
-in what state, why. Applies in every language and layer.
+in what state, why. Applies in every language and layer. Levels are
+runtime-switchable — injected through the component's most robust existing input
+event interface, plus an environment variable for startup — and gated output
+never goes to /dev/null: what's unimportant is turned off; what's on is readable
+from a file. Full field/injection/sink contract: the **logging-discipline skill**.
 
 **11. Every non-trivial task carries a proof-of-progress; silence is not
 success.** Absence-of-output looks identical to a hang, so decide the liveness
