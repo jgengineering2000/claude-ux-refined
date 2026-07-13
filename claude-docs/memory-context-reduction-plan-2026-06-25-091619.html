@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memory / Baseline-Context Reduction Plan — 2026-06-25</title>
+  <link rel="stylesheet" href="/ann.css">
+  <style>
+    body {
+      font: 15px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 6rem;
+      color: #1c1e21;
+      background: #fafafa;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin: 0 0 .2rem;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      margin: 2rem 0 .6rem;
+      border-bottom: 2px solid #d9dce1;
+      padding-bottom: .25rem;
+    }
+
+    h3 {
+      font-size: 1.02rem;
+      margin: 1.3rem 0 .4rem;
+    }
+
+    .sub {
+      color: #65676b;
+      margin: 0 0 1.4rem;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e3e6ea;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      margin: 1rem 0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+    }
+
+    code {
+      background: #eef0f3;
+      padding: .08em .35em;
+      border-radius: 4px;
+      font-size: .9em;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: .6rem 0;
+      font-size: .92rem;
+    }
+
+    th,
+    td {
+      border: 1px solid #e0e3e7;
+      padding: .4rem .6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f1f3f5;
+    }
+
+    .done {
+      color: #1a7f37;
+      font-weight: 600;
+    }
+
+    .prop {
+      color: #9a6700;
+      font-weight: 600;
+    }
+
+    .metric {
+      font-variant-numeric: tabular-nums;
+    }
+
+    ul {
+      margin: .4rem 0 .4rem 0;
+      padding-left: 1.4rem;
+    }
+
+    li {
+      margin: .25rem 0;
+    }
+
+    .note {
+      font-size: .88rem;
+      color: #65676b;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Memory / Baseline-Context Reduction Plan</h1>
+  <p class="sub">2026-06-25, reconciled 2026-07-13 · cross-project (AUR-level) · status: Phases&nbsp;0&amp;2
+    shipped in MTI (Phase&nbsp;2 via a lighter organic mechanism than originally proposed — see below);
+    Phase&nbsp;1 (description narrowing) and AUR promotion still open</p>
+  <p class="note">Provenance note: this doc was committed (<code>9753fe3</code>) on a branch
+    (<code>docs/context-reduction-plan</code>) that split off before the later master/PROCESS
+    compression pass (<code>12c8abc</code>, a separate effort — see Sequencing below) and was never
+    merged to <code>main</code>. Reconciled against actual MTI repo state and landed here 2026-07-13;
+    the branch is unmerged and superseded by this version.</p>
+
+  <div class="card">
+    <h2>Problem</h2>
+    <p>Sessions hit ~150k tokens within a minute of starting. The fixed always-loaded baseline
+      (the <code>claude_master.md</code> + <code>PROCESS.md</code> + project <code>CLAUDE.md</code>
+      chain ≈ 9k, plus <code>MEMORY.md</code> ≈ 3k) is <em>not</em> the driver. The driver is the
+      <strong>file-based memory recall corpus</strong>: in MTI it had grown to 142 files / ~57k words,
+      with broad multi-topic <code>description:</code> frontmatter that matches nearly any query, so a
+      large fraction is injected into <code>&lt;system-reminder&gt;</code> blocks up front every turn.
+    </p>
+    <p>This is a general (AUR-level) concern: any inheriting project accumulates memory the same way,
+      so the remediation pattern belongs here, not only in MTI.</p>
+  </div>
+
+  <div class="card">
+    <h2>Phase 0 — Shipped in MTI (2026-06-25)</h2>
+    <p>Two clearly-safe, high-confidence cuts already landed; recorded here as the baseline the
+      later phases build on.</p>
+    <table>
+      <tr>
+        <th>Action</th>
+        <th>Effect</th>
+        <th>Status</th>
+      </tr>
+      <tr>
+        <td>Move 36 <code>session_checkpoint_*</code> → <code>.claude/checkpoints/</code> (out of recall root)</td>
+        <td class="metric">−36 files, ~13k tokens of crash-survival scratch removed from recall</td>
+        <td class="done">DONE</td>
+      </tr>
+      <tr>
+        <td>Move 16 inherited-AUR feedback anchors → <code>.claude/inherited-aur-anchors/</code></td>
+        <td class="metric">−16 files, ~1k tokens; text was verbatim-equivalent to the auto-loaded AUR chain</td>
+        <td class="done">DONE</td>
+      </tr>
+      <tr>
+        <td>Redirect the 45-min checkpoint cron to write into <code>checkpoints/</code> and stop indexing it in
+          <code>MEMORY.md</code></td>
+        <td>Prevents re-bloat (cron would otherwise refill <code>memory/</code> within hours)</td>
+        <td class="done">DONE</td>
+      </tr>
+    </table>
+    <p class="note">Result: MTI recall root 142 → 90 files. Always-loaded baseline unchanged; fewer
+      files compete in recall, so fewer bodies pulled per turn.</p>
+  </div>
+
+  <h2>Phase 1 — Still open: narrow recall <code>description:</code> frontmatter</h2>
+  <div class="card">
+    <p class="note">Re-verified 2026-07-13: MTI's recall root now holds <strong>76</strong>
+      <code>project_*</code>/<code>feedback_*</code> files (down from 90 via Phase&nbsp;2's organic
+      archiving, not via this phase). Several still carry 40–72-word multi-topic descriptions —
+      <code>project_harness_fixture_redesign.md</code> (72 words) is the current worst offender. This
+      phase has <strong>not</strong> been done; it remains the one concretely actionable gap from this
+      plan.</p>
+    <p><strong>Why.</strong> The remaining files carry 40–72-word, multi-topic descriptions
+      (e.g. one line spanning "test integrity + P1 correctness + 3 decisions + PY-3 + resume point").
+      Semantic recall matches these against almost any task, so over-firing persists. A tight,
+      single-trigger description recalls a file only when it is genuinely relevant.</p>
+
+    <h3>Approach</h3>
+    <ul>
+      <li><strong>Verify the recall contract first.</strong> Confirm whether recall is top-K
+        ranked or match-all, and that it keys on <code>description:</code> only (not body). The
+        rewrite strategy differs: top-K → precision wins; match-all → narrowness directly cuts volume.</li>
+      <li><strong>One file = one trigger.</strong> Rewrite each <code>description:</code> to ≤ ~15
+        words naming the <em>specific</em> condition under which the fact should surface, not a
+        summary of its contents. The body already holds the detail.</li>
+      <li><strong>Split, don't cram.</strong> Where a file legitimately covers two unrelated
+        triggers, that is a signal it should be two memories (one fact per file — the standing rule).</li>
+      <li><strong>Mechanical + reviewed.</strong> Draft new descriptions in a batch, diff old→new
+        in a single review table, apply after sign-off. Frontmatter-only edits; bodies untouched.</li>
+    </ul>
+
+    <h3>Risk &amp; mitigation</h3>
+    <ul>
+      <li><strong>Risk:</strong> over-narrowing → a relevant memory stops surfacing.
+        <strong>Mitigation:</strong> keep <code>MEMORY.md</code> (the always-loaded human index) as
+        the safety net; it still lists every memory by hook, so a missed recall is recoverable by the
+        index rather than lost.
+      </li>
+      <li><strong>Risk:</strong> payoff depends on recall internals. <strong>Mitigation:</strong> the
+        verify-first step gates the whole phase.</li>
+    </ul>
+    <p class="note">Est. effort: ~90 frontmatter edits, one review gate. Est. payoff: fewer bodies
+      per turn (exact depends on recall contract).</p>
+  </div>
+
+  <h2>Phase 2 — Shipped in MTI, organically (verified 2026-07-13)</h2>
+  <div class="card">
+    <p class="note"><strong>Shipped, but not the way this section originally proposed.</strong>
+      There was no dedicated batch pass classifying every <code>project_*</code> file as
+      ACTIVE/SETTLED. Instead, <code>MEMORY-archive.md</code> now exists and is in active use:
+      <code>MEMORY.md</code> explicitly routes "low-per-turn-value pointers (inherited-AUR-rule
+      anchors, SHIPPED work, the checkpoint trail)" there, and new memories get filed against that
+      split as they're written (e.g. the 2026-07-13 Gemini-handoff memory). Net effect matches the
+      goal — SETTLED content is out of the always-injected recall path but still retrievable by hand —
+      achieved as an ongoing habit rather than a one-time reviewed batch. The
+      <code>.claude/memory-archive/</code> file-relocation option below was <em>not</em> used; the
+      pointer-demotion option was, exclusively.</p>
+    <p><strong>Why (original).</strong> Many <code>project_*</code> files describe work that is <em>shipped,
+        closed, or superseded</em> (e.g. Q1 done, multiple phases shipped, CLOSED-invalid items). They
+      hold "why we did X" value but should not front-load during active work — the same logic that
+      moved the checkpoints, applied with per-file judgment because the knowledge is durable.</p>
+
+    <h3>Approach</h3>
+    <ul>
+      <li><strong>Classify each <code>project_*</code> file</strong> as ACTIVE (open work / live
+        direction) vs SETTLED (shipped/closed/superseded). Git history + the file's own status
+        markers drive the call.</li>
+      <li><strong>SETTLED → <code>.claude/memory-archive/</code></strong> (out of the recall root,
+        like checkpoints) <em>or</em> demote its pointer into <code>MEMORY-archive.md</code> while
+        keeping the file recallable — choose per file:
+        <ul>
+          <li>Pure historical record (back-out lessons already internalised) → move out of recall.</li>
+          <li>Settled-but-still-referenced decision (an invariant other work cites) → keep recallable,
+            tighten description (Phase&nbsp;1).</li>
+        </ul>
+      </li>
+      <li><strong>Preserve linkage.</strong> Update <code>[[wikilinks]]</code> and the
+        <code>MEMORY.md</code> / <code>MEMORY-archive.md</code> indexes so nothing is orphaned.
+      </li>
+      <li><strong>Never delete.</strong> Archive = relocate out of recall, always retrievable by hand.</li>
+    </ul>
+
+    <h3>Risk &amp; mitigation</h3>
+    <ul>
+      <li><strong>Risk:</strong> archiving a file that an active task actually needs.
+        <strong>Mitigation:</strong> per-file judgment + the "still-referenced ⇒ keep recallable"
+        carve-out; index pointer retained in <code>MEMORY-archive.md</code>.
+      </li>
+      <li><strong>Risk:</strong> losing the "why". <strong>Mitigation:</strong> nothing is deleted;
+        durable rationale that belongs in a spec gets reconciled into the spec (existing spec-reconciliation work item).
+      </li>
+    </ul>
+  </div>
+
+  <h2>Sequencing &amp; AUR promotion</h2>
+  <div class="card">
+    <p class="note"><strong>Order didn't hold.</strong> This plan called for Phase&nbsp;1 before
+      Phase&nbsp;2; in practice Phase&nbsp;2 happened first (organically) and Phase&nbsp;1 still hasn't
+      happened. Harmless in outcome — Phase&nbsp;2's per-file judgment call didn't turn out to depend
+      on tightened descriptions — but the assumption is worth dropping rather than carrying forward.</p>
+    <ul>
+      <li><strong>Phase 1</strong> is the one item from this plan still worth doing: ~76 frontmatter
+        edits, one review gate (see Phase&nbsp;1 above for current numbers).</li>
+      <li><strong>Promote the pattern to AUR — still not done.</strong> The later
+        <code>12c8abc</code> master/PROCESS compression pass (Fable, 2026-07-10) was a related but
+        distinct effort — it shrank the always-loaded baseline (<code>claude_master.md</code>
+        24.5KB→11.5KB, <code>PROCESS.md</code> 9KB→3.1KB), not the per-project memory-recall corpus
+        this plan targets. Neither <code>claude_master.md</code> nor <code>PROCESS.md</code> currently
+        says anything about checkpoints-out-of-recall, one-trigger descriptions, or
+        SETTLED-archived-not-deleted. If the MTI pattern (proven: Phase&nbsp;0 done, Phase&nbsp;2 done)
+        is worth generalizing, it still needs its own AUR-level rule — this plan proposed it but never
+        landed it.</li>
+    </ul>
+  </div>
+
+  <script src="/manifest-link.js"></script>
+  <script src="/ann.js"></script>
+</body>
+
+</html>
