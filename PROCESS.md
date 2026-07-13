@@ -80,7 +80,10 @@ change behavior in a session that never touches its topic?" — if no,
 always-loading it is Priority-2 waste. The skill's trigger lives in its
 description; where a missed trigger is costly, an always-loaded principle keeps
 a one-line "invoke the X skill before Y" anchor (P10→logging-discipline and
-MTI's atspi-safety are the pattern). Reiterating a principle correctly in chat is NOT capturing
+MTI's atspi-safety are the pattern; a project's memory-recall corpus is the
+same shape — consult the **memory-hygiene skill** when setting one up or once
+it starts feeling bloated, rather than re-deriving the fix each time it recurs).
+Reiterating a principle correctly in chat is NOT capturing
 it; the in-chat echo is exactly what masks the filing error. When unsure whether
 something was dropped, re-read the transcript from the request forward — recall
 is the thing that fails here.
