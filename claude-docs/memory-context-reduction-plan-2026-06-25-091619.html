@@ -106,9 +106,10 @@
 <body>
 
   <h1>Memory / Baseline-Context Reduction Plan</h1>
-  <p class="sub">2026-06-25, reconciled 2026-07-13, Phase&nbsp;1 executed 2026-07-13 · cross-project
-    (AUR-level) · status: Phases&nbsp;0,&nbsp;1&nbsp;&amp;&nbsp;2 shipped in MTI (Phase&nbsp;2 via a
-    lighter organic mechanism than originally proposed — see below); AUR promotion still open</p>
+  <p class="sub">2026-06-25, reconciled + Phase&nbsp;1 executed + AUR-promoted 2026-07-13 ·
+    cross-project (AUR-level) · status: <strong>closed</strong> — Phases&nbsp;0,&nbsp;1&nbsp;&amp;&nbsp;2
+    shipped in MTI (Phase&nbsp;2 via a lighter organic mechanism than originally proposed — see below);
+    pattern promoted to <code>skills/memory-hygiene</code></p>
   <p class="note">Provenance note: this doc was committed (<code>9753fe3</code>) on a branch
     (<code>docs/context-reduction-plan</code>) that split off before the later master/PROCESS
     compression pass (<code>12c8abc</code>, a separate effort — see Sequencing below) and was never
@@ -263,17 +264,16 @@
     <ul>
       <li><strong>Phases 0, 1 &amp; 2 are now all shipped in MTI</strong> — see each phase above for
         commits. Nothing from this plan's MTI-side scope remains open.</li>
-      <li><strong>Promote the pattern to AUR — still not done.</strong> The later
-        <code>12c8abc</code> master/PROCESS compression pass (Fable, 2026-07-10) was a related but
-        distinct effort — it shrank the always-loaded baseline (<code>claude_master.md</code>
-        24.5KB→11.5KB, <code>PROCESS.md</code> 9KB→3.1KB), not the per-project memory-recall corpus
-        this plan targets. Neither <code>claude_master.md</code> nor <code>PROCESS.md</code> currently
-        says anything about checkpoints-out-of-recall, one-trigger descriptions, or
-        SETTLED-archived-not-deleted. Now that all three MTI phases are proven (Phase&nbsp;0 done,
-        Phase&nbsp;1 done, Phase&nbsp;2 done)
-        is worth generalizing, it still needs its own AUR-level rule — this plan proposed it but never
-        landed it.</li>
+      <li><strong>Promote the pattern to AUR — done, commit <code>0966882</code>.</strong> Filed as
+        <code>skills/memory-hygiene/SKILL.md</code> (a task-shaped recipe per PROCESS §6's own filing
+        rule — not inline text in <code>claude_master.md</code>/<code>PROCESS.md</code>, matching how
+        audit-methodology and logging-discipline are filed), with a one-line anchor added to PROCESS §6
+        and the usual <code>~/.claude/skills/</code> symlink. Note this was a separate effort from the
+        earlier <code>12c8abc</code> master/PROCESS compression pass (Fable, 2026-07-10), which shrank
+        the always-loaded baseline and was never going to cover this — different target (recall
+        corpus vs. baseline chain).</li>
     </ul>
+    <p class="note">All items from this plan are now closed.</p>
   </div>
 
   <script src="/manifest-link.js"></script>
