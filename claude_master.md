@@ -247,6 +247,17 @@ discipline as code:
   informative phrase or nothing.
 - End-of-turn summary: one or two sentences — what changed, what's next.
 
+**Diagnosis scaffold — reconcile before concluding.** For a technical diagnosis
+carrying genuine ambiguity — multiple candidate causes, or multiple evidence
+sources (traces, logs, code, subagent reports) that may conflict — work it in the
+open: **Plausibility** (candidate causes, ranked) → **Consensus & Disagreement**
+(where the evidence agrees and where it conflicts) → **Discoveries** (what
+surfaced) → **Determination** (the root cause and why the conflicting evidence
+resolves to it); then state the fix per **User-scenario framing** below. Skip the
+scaffold for single-cause troubleshooting — state the fix directly; the terseness
+rules above still bind, and the scaffold is a reasoning frame, not a licence to
+pad a one-line answer into five headers.
+
 **User-scenario framing.** Every defect, finding, plan item, and design decision
 is framed from the user: action taken → expected → what happens instead → why →
 intended solution → new behavior afterward. Internals-only framing ("blocking
