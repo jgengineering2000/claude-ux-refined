@@ -106,9 +106,9 @@
 <body>
 
   <h1>Memory / Baseline-Context Reduction Plan</h1>
-  <p class="sub">2026-06-25, reconciled 2026-07-13 · cross-project (AUR-level) · status: Phases&nbsp;0&amp;2
-    shipped in MTI (Phase&nbsp;2 via a lighter organic mechanism than originally proposed — see below);
-    Phase&nbsp;1 (description narrowing) and AUR promotion still open</p>
+  <p class="sub">2026-06-25, reconciled 2026-07-13, Phase&nbsp;1 executed 2026-07-13 · cross-project
+    (AUR-level) · status: Phases&nbsp;0,&nbsp;1&nbsp;&amp;&nbsp;2 shipped in MTI (Phase&nbsp;2 via a
+    lighter organic mechanism than originally proposed — see below); AUR promotion still open</p>
   <p class="note">Provenance note: this doc was committed (<code>9753fe3</code>) on a branch
     (<code>docs/context-reduction-plan</code>) that split off before the later master/PROCESS
     compression pass (<code>12c8abc</code>, a separate effort — see Sequencing below) and was never
@@ -159,15 +159,19 @@
       files compete in recall, so fewer bodies pulled per turn.</p>
   </div>
 
-  <h2>Phase 1 — Still open: narrow recall <code>description:</code> frontmatter</h2>
+  <h2>Phase 1 — Shipped in MTI (2026-07-13)</h2>
   <div class="card">
-    <p class="note">Re-verified 2026-07-13: MTI's recall root now holds <strong>76</strong>
-      <code>project_*</code>/<code>feedback_*</code> files (down from 90 via Phase&nbsp;2's organic
-      archiving, not via this phase). Several still carry 40–72-word multi-topic descriptions —
-      <code>project_harness_fixture_redesign.md</code> (72 words) is the current worst offender. This
-      phase has <strong>not</strong> been done; it remains the one concretely actionable gap from this
-      plan.</p>
-    <p><strong>Why.</strong> The remaining files carry 40–72-word, multi-topic descriptions
+    <p class="note"><strong>Done, commit <code>7bf1c19</code>.</strong> All 76
+      <code>project_*</code>/<code>feedback_*</code> descriptions rewritten to a single "recall when
+      X" trigger, ≤~15 words (worst case now 16 words — <code>project_aur_role.md</code> — down from a
+      worst case of 72). Frontmatter-only; bodies untouched; verified via <code>git diff --stat</code>
+      (76 files changed, 76/76 lines). The "verify the recall contract first" gate below was partially
+      satisfiable: <code>MEMORY.md</code>'s own header already documents that recall keys on each
+      file's <code>description:</code> frontmatter, not body — confirmed from the source rather than
+      re-derived. Whether ranking is top-K or match-all was not independently verifiable (harness
+      internals, not something in either repo); narrowing to one trigger improves precision either way,
+      so the phase proceeded without blocking on that unknown.</p>
+    <p><strong>Why (original).</strong> The remaining files carry 40–72-word, multi-topic descriptions
       (e.g. one line spanning "test integrity + P1 correctness + 3 decisions + PY-3 + resume point").
       Semantic recall matches these against almost any task, so over-firing persists. A tight,
       single-trigger description recalls a file only when it is genuinely relevant.</p>
@@ -252,19 +256,21 @@
   <h2>Sequencing &amp; AUR promotion</h2>
   <div class="card">
     <p class="note"><strong>Order didn't hold.</strong> This plan called for Phase&nbsp;1 before
-      Phase&nbsp;2; in practice Phase&nbsp;2 happened first (organically) and Phase&nbsp;1 still hasn't
-      happened. Harmless in outcome — Phase&nbsp;2's per-file judgment call didn't turn out to depend
-      on tightened descriptions — but the assumption is worth dropping rather than carrying forward.</p>
+      Phase&nbsp;2; in practice Phase&nbsp;2 happened first (organically, 2026-07-12) and Phase&nbsp;1
+      executed last (2026-07-13), after both had already been reconciled onto <code>main</code>.
+      Harmless in outcome — Phase&nbsp;2's per-file judgment call didn't turn out to depend on
+      tightened descriptions — but the assumption is worth dropping rather than carrying forward.</p>
     <ul>
-      <li><strong>Phase 1</strong> is the one item from this plan still worth doing: ~76 frontmatter
-        edits, one review gate (see Phase&nbsp;1 above for current numbers).</li>
+      <li><strong>Phases 0, 1 &amp; 2 are now all shipped in MTI</strong> — see each phase above for
+        commits. Nothing from this plan's MTI-side scope remains open.</li>
       <li><strong>Promote the pattern to AUR — still not done.</strong> The later
         <code>12c8abc</code> master/PROCESS compression pass (Fable, 2026-07-10) was a related but
         distinct effort — it shrank the always-loaded baseline (<code>claude_master.md</code>
         24.5KB→11.5KB, <code>PROCESS.md</code> 9KB→3.1KB), not the per-project memory-recall corpus
         this plan targets. Neither <code>claude_master.md</code> nor <code>PROCESS.md</code> currently
         says anything about checkpoints-out-of-recall, one-trigger descriptions, or
-        SETTLED-archived-not-deleted. If the MTI pattern (proven: Phase&nbsp;0 done, Phase&nbsp;2 done)
+        SETTLED-archived-not-deleted. Now that all three MTI phases are proven (Phase&nbsp;0 done,
+        Phase&nbsp;1 done, Phase&nbsp;2 done)
         is worth generalizing, it still needs its own AUR-level rule — this plan proposed it but never
         landed it.</li>
     </ul>
