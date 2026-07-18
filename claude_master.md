@@ -71,7 +71,12 @@ performance regression, or a cost pathological for the work done, is a defect on
 par with a correctness bug, never a tolerated tradeoff — keep an on-demand
 perf-regression check, and at every threading increment keep a runtime switch
 back to the fully-synchronous core so concurrency can be bisected out of a
-suspected fault.
+suspected fault. **Timing is part of every test and build result** — each
+component's duration is recorded and compared to its expectation, and a breach
+is presented and remediated immediately post-run like any red test, never
+archived silently; runtime INFO-level operation logs carry the same durations
+(logging-discipline skill) so any logged run doubles as a perf sensor
+(checklist mechanics: PROCESS §8).
 
 **8. Own the resource lifecycle at the owner, self-healing across every entry
 context.** A component owning a singleton system resource (mount, socket, lock,

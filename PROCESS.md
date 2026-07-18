@@ -95,3 +95,15 @@ against HEAD (`git log --since=<doc-date> -- <files>` plus reading the live
 sections) — an audit is a snapshot whose items may already be shipped, and
 planning from it re-litigates settled work (P5). Cite commit SHAs for "already
 done"; only the genuinely-unexecuted residue enters the plan.
+
+## 8. Long-running work presents a timed checklist — silence is not progress
+
+Harnesses, builds, and any multi-stage job print their component checklist up
+front with expected durations (a ±30% band around the last recorded run; a
+single run seeds the expectation), flip each component to done-with-actual as
+it completes, and flag a band breach live — the operator must never sit
+watching an opaque spinner. The per-component timing record is persisted as
+part of the test/build result (P7 corollary: performance is result content,
+not metadata), and a breach is triaged immediately post-run like a red test.
+Components with no baseline print an explicit "no expectation yet" marker
+rather than silently omitting the estimate.
