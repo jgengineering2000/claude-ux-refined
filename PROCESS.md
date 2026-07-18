@@ -33,6 +33,14 @@ analyzer with stable indexed references; eyeballing a log in chat is the
 signal to write it. That analytical case (trace mining, Valgrind/log/
 query-plan/diff parsing) is one instance of this rule, not its boundary.
 
+Recurring permission-prompted operations are the same trigger applied to
+authorization friction: a bespoke, instance-specific invocation (exact PIDs,
+exact paths) can never be pre-authorized, but the narrow, reviewed,
+committed script wrapping it (exact-match census-then-act, self-reporting)
+collapses to one stable command a permission rule can cover — write that
+script instead of re-authorizing the bespoke form each time, and never widen
+the rule beyond the reviewed script's own invocation.
+
 ## 2. Comprehensive audits fan out per subsystem and read end-to-end
 
 One agent/pass per subsystem reading 100% of its files (sampling gives false
