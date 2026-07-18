@@ -107,3 +107,12 @@ part of the test/build result (P7 corollary: performance is result content,
 not metadata), and a breach is triaged immediately post-run like a red test.
 Components with no baseline print an explicit "no expectation yet" marker
 rather than silently omitting the estimate.
+
+The measurement layer is itself crystallised tooling (§1), never inline
+re-derivation: a shared Python metrics toolset that **measures, stores (with
+run history), reviews, and presents** per-component durations *and*
+success/failure outcomes across both builds and tests — one store, one parser,
+one presenter consumed by every harness. The model reasons over the tool's
+findings and trends; it never hand-mines timing or pass/fail output across
+repeated runs — anything iterative or repeated where intelligence is spent on
+multiple invocations of the same extraction is the signal to extend the tool.
