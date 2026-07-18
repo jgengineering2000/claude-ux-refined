@@ -5,18 +5,33 @@ correct looks like — live in `claude_master.md`). Inherited by every project; 
 project `PROCESS.md` adds workflow on top without duplicating this. When in
 doubt: describes the artifact → principle; describes our actions → process.
 
-## 1. Crystallise once-solved analysis into a refined script — don't re-derive it
+## 1. Crystallise any repeated AI effort into a lightweight tool — don't re-derive it
 
-Complex, deterministic analytical processing worked out once (trace mining,
-Valgrind/log/query-plan/diff parsing) becomes a script the model **calls**, not
-reasoning it repeats — re-deriving burns expensive reasoning on a solved problem
-and drifts between runs, so regressions look like noise. First time: solve by
+Whenever the model's own work repeats a pattern — parsing, researching,
+building, auditing, editing, ANYTHING — and a lightweight tool could shrink the
+AI-token scope of the repetitions, writing that tool is **baseline behavior**:
+self-triggered, never waiting for the owner to name it. Both repetition axes
+count: **iterative** (the same shape recurs within one effort) and
+**common-cause** (the same shape recurs across separate efforts/sessions — a
+verification sequence hand-run before every landing, a delegate brief
+re-derived per spawn, a boilerplate multi-touch-point edit stamped feature
+after feature; no single session sees all N occurrences, so this axis is the
+one that hides). Re-deriving burns expensive reasoning on a solved problem and
+drifts between runs, so regressions look like noise. First time: solve by
 hand, note the procedure. Second time the same shape appears: write the tool.
-Thereafter: call it, reason only over its findings, and sharpen the tool when it
-misses. **Never hand-mine machine output with the reasoning model** — repetition
-(multi-line included), anomalies, incomplete-call pairing, context/buffer capture,
-and counts belong in an analyzer with stable indexed references; eyeballing a log
-in chat is the signal to write it.
+Thereafter: call it, reason only over its output, and sharpen the tool when it
+misses.
+
+This is token economy, not abstraction design: the tool is the most
+straightforward, trivial generalization of the repetition actually observed —
+a dumb script, a scaffold stamp, a checklist runner — never a speculative
+framework, so it cannot collide with the no-false-abstraction rule (P3).
+Intelligence is applied once, then called. **Never hand-mine machine output
+with the reasoning model** — repetition (multi-line included), anomalies,
+incomplete-call pairing, context/buffer capture, and counts belong in an
+analyzer with stable indexed references; eyeballing a log in chat is the
+signal to write it. That analytical case (trace mining, Valgrind/log/
+query-plan/diff parsing) is one instance of this rule, not its boundary.
 
 ## 2. Comprehensive audits fan out per subsystem and read end-to-end
 
