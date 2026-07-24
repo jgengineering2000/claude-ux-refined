@@ -16,15 +16,20 @@ function mkWrap(ph) {
   return w;
 }
 function wireInput(id, btn, ta, st) {
+  // Preserve the button's default tooltip (e.g. "Annotate DG1") so hover-preview
+  // can fall back to it when the note is empty.
+  const defTitle = btn.title || '';
+  const preview = (val) => { btn.title = val && val.trim() ? val.trim() : defTitle; };
   ta.oninput = () => {
     notes[id] = ta.value;
     btn.classList.toggle('has-note', ta.value.length > 0);
     if (!btn.dataset.icon) btn.textContent = ta.value ? '✎ Note' : '✎ Annotate';
+    preview(ta.value);          // hover-preview: button title shows the note text
     st.textContent = 'Saving…';
     try { localStorage.setItem('ann:' + DOC, JSON.stringify(notes)); } catch(e) {}
     clearTimeout(tmr); tmr = setTimeout(save, 800);
   };
-  annMap.set(id, {btn, ta});
+  annMap.set(id, {btn, ta, preview});
 }
 
 // ── Phase 0: snapshot heading prefixes and hierarchical keys ──────────────
@@ -132,8 +137,8 @@ async function save() {
 async function load() {
   try { notes = await (await fetch(API)).json(); }
   catch(e) { try { const l = localStorage.getItem('ann:' + DOC); if (l) notes = JSON.parse(l); } catch(e2) {} }
-  annMap.forEach(({btn, ta}, id) => {
-    if (notes[id]) { ta.value = notes[id]; btn.classList.add('has-note'); if (!btn.dataset.icon) btn.textContent = '✎ Note'; }
+  annMap.forEach(({btn, ta, preview}, id) => {
+    if (notes[id]) { ta.value = notes[id]; btn.classList.add('has-note'); if (!btn.dataset.icon) btn.textContent = '✎ Note'; if (preview) preview(notes[id]); }
   });
 }
 load();

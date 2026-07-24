@@ -48,13 +48,27 @@
     if (bar) return bar;
     // Self-contained host: pages that include manifest-link.js but don't
     // pre-render a .bar div still get the header.
+    //
+    // Robust full-bleed sticky bar that makes NO assumption about the body's
+    // padding. The previous `margin:-32px` bled the bar off-screen on any doc
+    // whose body padding wasn't exactly 32px (manifest.html uses 0 via
+    // .container, plan docs 28px) — that brittleness is why the header
+    // "vanished". Instead: neutralise the body's top padding so the sticky bar
+    // pins to the true viewport top, and pull the bar out over the body's
+    // ACTUAL left/right padding (whatever it is) to stay edge-to-edge.
+    var cs = getComputedStyle(document.body);
+    var padT = parseInt(cs.paddingTop, 10) || 0;
+    var padL = parseInt(cs.paddingLeft, 10) || 0;
+    var padR = parseInt(cs.paddingRight, 10) || 0;
+    document.body.style.paddingTop = '0';
     bar = document.createElement('div');
     bar.className = 'bar';
     bar.style.cssText =
       'position:sticky;top:0;z-index:100;background:var(--cb,#181825);' +
       'border-bottom:1px solid var(--bd,#3a3a55);padding:8px 16px;' +
       'display:flex;align-items:center;gap:12px;' +
-      'margin:-32px -32px 28px;font-size:12px;color:var(--mu,#7f849c)';
+      'margin:0 -' + padR + 'px ' + (padT || 24) + 'px -' + padL + 'px;' +
+      'font-size:12px;color:var(--mu,#7f849c)';
     document.body.insertBefore(bar, document.body.firstChild);
     return bar;
   }
@@ -96,6 +110,25 @@
       url.textContent = window.location.origin + window.location.pathname;
       var anchor = bar.querySelector('.altd-label') || existingLink;
       anchor.insertAdjacentElement('afterend', url);
+    }
+
+    // ── Centre: current document name ────────────────────────────────────
+    // Absolutely centred over the bar (the sticky bar is a containing block),
+    // so it stays centred regardless of the side-group widths. Basename of the
+    // URL for a glanceable identity when several docs are open, with the full
+    // <title> as a hover tooltip. Complements the selectable URL chip (copy the
+    // link) — this is the at-a-glance "which doc am I in".
+    if (!bar.querySelector('.doc-name')) {
+      var name = document.createElement('span');
+      name.className = 'doc-name';
+      var base = decodeURIComponent(window.location.pathname.split('/').pop() || '');
+      name.textContent = base || document.title || '(document)';
+      name.title = document.title || base;
+      name.style.cssText =
+        'position:absolute;left:50%;transform:translateX(-50%);max-width:45%;' +
+        'font-weight:600;color:var(--tx,#cdd6f4);font-size:12px;overflow:hidden;' +
+        'text-overflow:ellipsis;white-space:nowrap;pointer-events:none';
+      bar.appendChild(name);
     }
 
     // ── Right: timestamp + ↻ Refresh — skip if already injected ──────────
