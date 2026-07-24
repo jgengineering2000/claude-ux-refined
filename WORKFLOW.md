@@ -19,8 +19,13 @@ claude-docs/<name>-<date>-<HHMMSS>.html
     │  serves claude-docs/ on localhost
     │  stores/retrieves annotations as JSON
     ▼
-Alt+D keybinding  →  simpleBrowser.show(http://localhost:PORT/manifest.html)
-    │  single keystroke opens the manifest in the IDE's built-in browser
+Alt+D keybinding  (runCommands, two phases)
+    │  1. task "Ensure doc server" → .claude/open-manifest.sh
+    │       health-checks the port, starts server.py if nothing is listening,
+    │       and re-points this binding at .claude/server.port
+    │  2. simpleBrowser.show(http://localhost:PORT/manifest.html)
+    │  single keystroke, and the server is guaranteed up before the browser
+    │  connects — binding the browser directly races the folderOpen auto-start
     ▼
 manifest.html
     │  lists all documents with date, title, annotation count
@@ -102,7 +107,9 @@ Projects using AUR infrastructure add the following to their CLAUDE.md:
 1. Write structured output as HTML to `claude-docs/`, never paste it into chat.
 2. Filename format: `<type>-<YYYY>-<MM>-<DD>-<HHMMSS>.html`.
 3. Post a one-paragraph summary + Alt+D reminder in chat after writing.
-4. Update the Alt+D keybinding to point at the new document.
+4. Never repoint the Alt+D keybinding per document — it targets `manifest.html`,
+   the stable entry point that lists every document by date. The only thing that
+   rewrites that URL is `open-manifest.sh`, tracking `.claude/server.port`.
 5. Every HTML document must include the annotation system CSS + JS verbatim.
 6. Every HTML document must include `<script src="/manifest-link.js"></script>`
    before `</body>` (except `manifest.html` itself).
@@ -122,9 +129,9 @@ optimised instruction set for each trigger phrase.
 
 ---
 
-## Server auto-start (VS Code task)
+## Server auto-start and health-check (VS Code tasks)
 
-The installer adds a VS Code task to `.vscode/tasks.json`:
+The installer adds two VS Code tasks to `.vscode/tasks.json`:
 
 ```json
 {
@@ -135,8 +142,27 @@ The installer adds a VS Code task to `.vscode/tasks.json`:
 }
 ```
 
-This starts the server automatically when the project folder is opened. The task
-uses `presentation.reveal: "silent"` so it does not interrupt the editor layout.
+Starts the server automatically when the project folder is opened. Uses
+`presentation.reveal: "silent"` so it does not interrupt the editor layout.
+
+```json
+{
+  "label": "Ensure doc server",
+  "type": "shell",
+  "command": "bash '${workspaceFolder}/.claude/open-manifest.sh'"
+}
+```
+
+Run by Alt+D as phase 1, *before* the browser opens. It resolves the port from
+`.claude/server.port`, starts `server.py` detached if nothing answers, and waits
+for it to bind — closing the window where the folderOpen task has not finished
+(or the server has since died) and Simple Browser would show connection-refused.
+It also re-points the Alt+D binding at the resolved port.
+
+Both labels are referenced by name — the keybinding invokes `Ensure doc server`
+via `workbench.action.tasks.runTask`, so renaming a task means renaming it in the
+keybinding too (`docinfra.START_TASK_LABEL` / `ENSURE_TASK_LABEL` keep the
+installer's two copies in sync).
 
 ---
 

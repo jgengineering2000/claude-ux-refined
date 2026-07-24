@@ -22,6 +22,13 @@
           "endsPattern":   "^Claude doc server"
         }
       }
+    },
+    {
+      "label": "Ensure doc server",
+      "type": "shell",
+      "command": "bash '${workspaceFolder}/.claude/open-manifest.sh'",
+      "presentation": { "reveal": "never", "panel": "dedicated", "close": true },
+      "problemMatcher": []
     }
   ]
 }

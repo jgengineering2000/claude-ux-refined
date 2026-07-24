@@ -10,14 +10,23 @@ Usage:
     python3 install.py
 """
 
-import json
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-HERE = Path(__file__).parent
+import docinfra
+from docinfra import (
+    SIMPLEBROWSER_CANDIDATES,
+    detect_ides,
+    install_keybinding,
+    install_review_infra,
+    install_task,
+)
+
+# Payload root — _MEIPASS-aware so a PyInstaller build finds patches/ and
+# systemd/ too, not just the doc-infra trees docinfra resolves itself.
+HERE = docinfra.resource_root()
 
 # ── Terminal helpers ──────────────────────────────────────────────────────────
 
@@ -60,149 +69,6 @@ def ask_choice(prompt, choices, default=None):
         if raw in choices:
             return raw
         print(f"  Enter one of: {', '.join(choices)}")
-
-# ── IDE detection ─────────────────────────────────────────────────────────────
-
-SIMPLEBROWSER_CANDIDATES = [
-    Path("/usr/share/antigravity/resources/app/extensions/simple-browser/dist/extension.js"),
-    Path("/usr/share/code/resources/app/extensions/simple-browser/dist/extension.js"),
-    Path("/snap/code/current/usr/share/code/resources/app/extensions/simple-browser/dist/extension.js"),
-]
-
-def detect_ides():
-    ides = []
-    if Path("~/.antigravity").expanduser().exists():
-        ides.append("antigravity")
-    if Path("~/.vscode").expanduser().exists():
-        ides.append("vscode")
-    return ides
-
-def keybindings_path(ide):
-    if ide == "antigravity":
-        return Path("~/.config/Antigravity/User/keybindings.json").expanduser()
-    return Path("~/.config/Code/User/keybindings.json").expanduser()
-
-# ── Keybinding file helpers ───────────────────────────────────────────────────
-
-def _strip_line_comments(text):
-    """Strip // comments for JSONC parsing. Does not handle block comments."""
-    result, in_string, i = [], False, 0
-    while i < len(text):
-        if in_string:
-            if text[i] == "\\" and i + 1 < len(text):
-                result += [text[i], text[i + 1]]
-                i += 2
-                continue
-            if text[i] == '"':
-                in_string = False
-            result.append(text[i])
-        else:
-            if text[i] == '"':
-                in_string = True
-                result.append(text[i])
-            elif text[i : i + 2] == "//":
-                while i < len(text) and text[i] != "\n":
-                    i += 1
-                continue
-            else:
-                result.append(text[i])
-        i += 1
-    return "".join(result)
-
-def install_keybinding(ide, port):
-    path = keybindings_path(ide)
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    entry = {
-        "key": "alt+d",
-        "command": "simpleBrowser.show",
-        "args": f"http://localhost:{port}/manifest.html",
-    }
-
-    data = []
-    if path.exists():
-        try:
-            data = json.loads(_strip_line_comments(path.read_text()))
-        except (json.JSONDecodeError, ValueError):
-            print(f"    WARNING: could not parse {path} — will create a new file")
-            data = []
-
-    updated = False
-    for i, item in enumerate(data):
-        if item.get("key") == "alt+d" and item.get("command") == "simpleBrowser.show":
-            data[i] = entry
-            updated = True
-            break
-    if not updated:
-        data.append(entry)
-
-    path.write_text(json.dumps(data, indent=2) + "\n")
-    action = "Updated" if updated else "Added"
-    print(f"    {action} Alt+D keybinding → {path}")
-
-# ── tasks.json helper ─────────────────────────────────────────────────────────
-
-TASK_LABEL = "Start Claude doc server"
-
-def install_task(project_dir, port):
-    vscode_dir = project_dir / ".vscode"
-    tasks_path = vscode_dir / "tasks.json"
-    vscode_dir.mkdir(exist_ok=True)
-
-    template = HERE / "server" / "tasks.json.template"
-    new_task = json.loads(template.read_text())["tasks"][0]
-
-    # If using a non-default port, inject CLAUDE_DOC_PORT into the command
-    if port != 7432:
-        new_task["command"] = f"CLAUDE_DOC_PORT={port} " + new_task["command"]
-
-    if tasks_path.exists():
-        try:
-            data = json.loads(tasks_path.read_text())
-        except (json.JSONDecodeError, ValueError):
-            print(f"    WARNING: could not parse {tasks_path} — skipping task install")
-            return
-        tasks = data.get("tasks", [])
-        for t in tasks:
-            if t.get("label") == TASK_LABEL:
-                print(f"    Task '{TASK_LABEL}' already present — skipping")
-                return
-        tasks.append(new_task)
-        data["tasks"] = tasks
-        tasks_path.write_text(json.dumps(data, indent=2) + "\n")
-        print(f"    Merged task into {tasks_path}")
-    else:
-        shutil.copy(template, tasks_path)
-        print(f"    Created {tasks_path}")
-
-# ── Review infrastructure ─────────────────────────────────────────────────────
-
-def install_review_infra(project_dir, do_claude_md):
-    claude_dir = project_dir / ".claude"
-    docs_dir = project_dir / "claude-docs"
-    claude_dir.mkdir(exist_ok=True)
-    docs_dir.mkdir(exist_ok=True)
-
-    files = [
-        (HERE / "server" / "server.py",         claude_dir / "server.py"),
-        (HERE / "server" / "manifest-link.js",  docs_dir / "manifest-link.js"),
-        (HERE / "server" / "ann.css",           docs_dir / "ann.css"),
-        (HERE / "server" / "ann.js",            docs_dir / "ann.js"),
-        (HERE / "templates" / "manifest.html",  docs_dir / "manifest.html"),
-    ]
-    for src, dst in files:
-        shutil.copy2(src, dst)
-        print(f"    {src.name} → {dst}")
-
-    if do_claude_md:
-        dst = project_dir / "CLAUDE.md"
-        if dst.exists():
-            print(f"    CLAUDE.md already exists — not overwriting")
-            print(f"      (template is at {HERE / 'templates' / 'CLAUDE.md.template'})")
-        else:
-            shutil.copy2(HERE / "templates" / "CLAUDE.md.template", dst)
-            print(f"    CLAUDE.md.template → {dst}")
-            print(f"    !! Edit {dst} — add project context at the bottom")
 
 # ── Patch runner ──────────────────────────────────────────────────────────────
 
@@ -342,12 +208,13 @@ def main():
     if do_b:
         section("Installing Review Infrastructure")
         print()
-        install_review_infra(project_dir, do_claude_md)
+        log = lambda msg: print(f"    {msg}")
+        install_review_infra(project_dir, do_claude_md, log)
         if do_task:
-            install_task(project_dir, port)
+            install_task(project_dir, port, log)
         if do_keybinding:
             for ide in ides:
-                install_keybinding(ide, port)
+                install_keybinding(ide, port, log)
 
     # ── Done ──────────────────────────────────────────────────────────────────
     section("Done")

@@ -54,8 +54,8 @@ pyinstaller --onefile --windowed --name claude-ux-installer install-gui.py
 ```bash
 VERSION=vX.Y.Z   # e.g. v2.1.0
 zip -r /tmp/claude-ux-refined-${VERSION}-source.zip \
-  patches/ server/ templates/ keybindings/ \
-  install.py install-gui.py README.md LICENSE \
+  patches/ server/ templates/ keybindings/ systemd/ \
+  install.py install-gui.py docinfra.py README.md LICENSE \
   PROJECT.md PROMPTS.md PATCHES.md WORKFLOW.md RELEASE.md \
   -x "*.bak" -x "__pycache__/*" -x "*.pyc"
 ```

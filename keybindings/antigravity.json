@@ -1,10 +1,32 @@
 // Add to ~/.config/Antigravity/User/keybindings.json
-// Opens the latest Claude review document in Jetski (Simple Browser).
-// Update the URL whenever Claude generates a new document.
+// (VS Code: ~/.config/Code/User/keybindings.json)
+//
+// Opens the document manifest in the IDE's Simple Browser.
+//
+// Two phases via runCommands, deliberately:
+//   1. "Ensure doc server" runs .claude/open-manifest.sh, which health-checks
+//      the port and starts server.py if nothing is listening. Without this,
+//      pressing Alt+D before the folderOpen auto-start task has bound (or after
+//      the server died) shows connection-refused.
+//   2. simpleBrowser.show opens the MANIFEST — the stable entry point listing
+//      every document by date, so this URL never needs updating per document.
+//
+// It must be the simpleBrowser.show COMMAND, not a vscode:// URI: Antigravity
+// ships the simple-browser extension but registers no
+// vscode://vscode.simpleBrowser/show URI handler.
+//
+// The port below is only the default. open-manifest.sh rewrites this URL to
+// match .claude/server.port, so a server that scanned past a busy 7432 does not
+// leave the binding pointing at a dead port.
 [
   {
     "key": "alt+d",
-    "command": "simpleBrowser.show",
-    "args": "http://localhost:7432/your-doc.html"
+    "command": "runCommands",
+    "args": {
+      "commands": [
+        { "command": "workbench.action.tasks.runTask", "args": "Ensure doc server" },
+        { "command": "simpleBrowser.show", "args": "http://localhost:7432/manifest.html" }
+      ]
+    }
   }
 ]

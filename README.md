@@ -168,7 +168,12 @@ The interactive installer handles all of this. For manual setup:
 ```bash
 mkdir -p yourproject/.claude
 cp server/server.py yourproject/.claude/
+cp server/open-manifest.sh yourproject/.claude/
+chmod +x yourproject/.claude/open-manifest.sh
 ```
+
+`open-manifest.sh` is the health-check the Alt+D keybinding runs before opening
+the browser (step 4), and it keeps that binding's URL pointed at the live port.
 
 **2. Start it:**
 
@@ -190,10 +195,24 @@ cp templates/manifest.html yourproject/claude-docs/
 ```json
 {
   "key": "alt+d",
-  "command": "simpleBrowser.show",
-  "args": "http://localhost:7432/manifest.html"
+  "command": "runCommands",
+  "args": {
+    "commands": [
+      { "command": "workbench.action.tasks.runTask", "args": "Ensure doc server" },
+      { "command": "simpleBrowser.show", "args": "http://localhost:7432/manifest.html" }
+    ]
+  }
 }
 ```
+
+Two phases, deliberately. Phase 1 runs the `Ensure doc server` task
+(`.claude/open-manifest.sh`), which health-checks the port and starts the server
+if nothing is listening; phase 2 opens the manifest. Binding `simpleBrowser.show`
+directly races the `folderOpen` auto-start task and shows connection-refused when
+the server has not bound yet.
+
+`open-manifest.sh` also rewrites this URL to match `.claude/server.port`, so the
+binding follows the server if it scans past a busy 7432.
 
 **5. Add `CLAUDE.md` to your project:**
 
@@ -255,8 +274,9 @@ aur/
 │   └── simplebrowser-title.py     tab title fix (VS Code + forks)
 ├── server/
 │   ├── server.py                  annotation-capable doc server
+│   ├── open-manifest.sh           Alt+D health-check, start, port-sync
 │   ├── manifest-link.js           injected bar script for all docs
-│   └── tasks.json.template        VS Code auto-start task
+│   └── tasks.json.template        VS Code auto-start + ensure tasks
 ├── templates/
 │   ├── CLAUDE.md.template         project instructions for Claude
 │   ├── manifest.html              document hub with prompt bar
@@ -265,6 +285,7 @@ aur/
 │   └── antigravity.json           Alt+D binding example
 ├── install.py                     CLI installer
 ├── install-gui.py                 GUI installer (tkinter)
+├── docinfra.py                    shared doc-infra install logic (both installers)
 ├── PROJECT.md                     vision, goals, roadmap
 ├── PROMPTS.md                     canonical prompt library
 ├── PATCHES.md                     patch technical specifications
