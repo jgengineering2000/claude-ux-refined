@@ -14,7 +14,24 @@
 
 [Unit]
 Description=Re-apply Claude Code UX patches after an extension update
+# An extension update rewrites the whole extensions dir, so the .path watcher can
+# fire this oneshot many times within seconds. Disable the start-rate limiter so
+# that burst can never trip 'start-limit-hit' and wedge the service in a failed
+# state — which is exactly how a 2.1.216 -> 2.1.218 update slipped through
+# unpatched (the watcher was locked out, and .path is edge-triggered so the miss
+# never self-corrected).
+StartLimitIntervalSec=0
 
 [Service]
 Type=oneshot
+# Let the extension extraction settle before patching, so we patch the final
+# files instead of a half-written webview. systemd coalesces the burst of path
+# triggers into ~one queued run while this sleeps.
+ExecStartPre=/usr/bin/sleep 8
 ExecStart=/usr/bin/python3 __AUR_DIR__/patches/apply-all.py --no-browser
+
+[Install]
+# Backstop for the edge-triggered .path unit: an update that lands while the
+# watcher is down (logged out, or a previously wedged service) would otherwise
+# stay unpatched forever. A login-time idempotent re-apply self-corrects that gap.
+WantedBy=default.target

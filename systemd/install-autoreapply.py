@@ -44,6 +44,7 @@ def systemctl(*args, check=True):
 
 def uninstall():
     systemctl("disable", "--now", PATH_UNIT, check=False)
+    systemctl("disable", "--now", SERVICE, check=False)
     for name in (PATH_UNIT, SERVICE):
         target = UNIT_DIR / name
         if target.exists():
@@ -65,10 +66,17 @@ def install():
     print(f"  wrote {UNIT_DIR / PATH_UNIT}")
 
     systemctl("daemon-reload")
+    # Clear any prior 'start-limit-hit' wedge before (re)enabling.
+    systemctl("reset-failed", SERVICE, check=False)
     systemctl("enable", "--now", PATH_UNIT)
+    # Enable the service too: WantedBy=default.target makes it a login-time
+    # backstop for updates the edge-triggered .path missed, and --now runs it
+    # immediately so the currently-installed extension is patched on install.
+    systemctl("enable", "--now", SERVICE)
 
     print("\nInstalled. The watcher is active and will re-apply the patches")
-    print("after the next Claude Code extension update. Status:")
+    print("after the next Claude Code extension update, plus once at each login")
+    print("as a backstop. Status:")
     systemctl("status", PATH_UNIT, "--no-pager", check=False)
 
 
